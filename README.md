@@ -1,65 +1,118 @@
-# 邬至涛+张博源+黄健熙+王致远
- 
+# 邬至涛 + 张博源 + 黄健熙 + 王致远
+
 # 职业能力大数据服务平台
----
-## 项目描述
-平台利用前沿的大数据技术，综合采集各类行业就业信息大数据，使用定制化的核心算法对采集数据进行统计和分析，形成针对各行业的就业形势大数据分析报告，最终达到指导学院进行相关教学改革，辅助相关管理决策的目的。
-
-平台包含以下核心功能模块：
-- 分布式数据采集模块
-- 报告分析系统
-- 报告自动生成系统
-- 就业岗位推送系统
-- 对外公开 API
-
-系统核心功能为分析职位数据，为学校教学、学生求职提供参考意见。
 
 ---
+
+## 项目简介
+
+本项目是一个面向高校的**就业数据分析与岗位推荐平台**，利用公开招聘数据，对岗位数量、薪资水平、技能需求、学历要求、地域分布等维度进行统计分析，自动生成就业分析报告，并为学生提供个性化岗位推荐。
+
+平台核心功能模块：
+- 数据采集与清洗模块
+- 多维度就业数据分析模块
+- 报告自动生成模块（PDF / Word / Excel）
+- 个性化岗位推荐模块
+- 对外开放 API
+
+系统核心价值：分析职位数据，为学校教学改革、学生求职规划提供数据参考。
+
+---
+
 ## 技术栈
-### 后端与大数据
-- 语言与框架：`JavaEE`、`SSM`、`SpringBoot`、`Flask`
-- 大数据组件：`Hadoop`、`MapReduce`、`Hive`、`HBase`、`Kafka`、`Spark`、`Zookeeper`、`YARN`
-- 中间件：`Redis`、`Nginx`
+
+### 后端
+- **语言：** Java
+- **框架：** Spring Boot 2.7+
+- **安全：** Spring Security + JWT（RBAC 权限模型）
+- **数据库：** MySQL 8.0
+- **缓存：** Redis 7
 
 ### 前端
-- 语言：`JavaScript`
-- 框架：主流前端框架
+- **语言：** JavaScript
+- **框架：** Vue 3 + Element Plus
+- **可视化：** ECharts
+
+### 数据处理（Python）
+- 公开数据集导入与标准化
+- ETL 数据清洗脚本
+- 技能关键词提取
+
+### 进阶选做（大数据组件）
+- **消息队列：** Kafka（基础方案用 Redis List 替代）
+- **分布式存储：** HDFS
+- **离线计算：** Spark SQL
+- **数据仓库：** Hive
 
 ---
-## 开发 / 部署相关
-### 开发语言
-- `Java`
-- `JavaScript`
 
-### 框架及中间件
-- 后端框架：`SpringBoot`
-- 消息队列：`Kafka`
-- 大数据计算：`Spark`
-- 缓存：`Redis`
-- 反向代理/负载均衡：`Nginx`
+## 开发环境
 
-### 配置管理系统
-- `Git`
-- `SVN`
+| 类别 | 工具 |
+|------|------|
+| 后端 IDE | IntelliJ IDEA |
+| 前端 IDE | VS Code / HBuilderX |
+| 数据库工具 | Navicat / SQLyog |
+| 接口测试 | Postman / Apifox |
+| 版本控制 | Git |
+| 部署 | Docker + Docker Compose |
 
-### 集成开发环境
-- `Eclipse 2020`
-- `IntelliJ IDEA 2020`
-- `HBuilderX`
-- `JetBrains PyCharm 2020`
+---
 
-### 开发工具
-- 建模工具：`Visio 2013`、`PowerDesigner 16.5`
-- 项目管理：`Microsoft Project 2013`
-- 测试工具：`LoadRunner 8.0`、`QC 9.0`
-- 数据库客户端：`SQLyog`、`Navicat`
+## 数据库
 
-### 数据库
-- `Oracle 11g`
-- `SQL Server 2012`
-- `MySQL 8.0`
+- MySQL 8.0（核心业务数据库）
+- Redis 7（缓存 + 轻量消息队列）
 
-### 部署环境
-- `Linux`
-- `Windows`
-- `Docker`
+---
+
+## 部署环境
+
+- Windows / Linux
+- Docker + Docker Compose（一键启动）
+
+---
+
+## 快速开始
+
+### 基础方案（5 个容器，推荐实训使用）
+
+```bash
+# 1. 启动基础服务
+docker-compose up -d mysql redis
+
+# 2. 初始化数据库
+# 执行 sql/init.sql 建表
+
+# 3. 导入公开数据集
+cd data-pipeline && python import_data.py --source ../data/sample_jobs.csv
+
+# 4. 运行 ETL 清洗
+python etl_clean.py
+
+# 5. 启动后端
+cd backend && mvn spring-boot:run
+
+# 6. 启动前端
+cd frontend && npm install && npm run dev
+```
+
+### 进阶方案（含大数据组件）
+
+在基础方案之上，额外启动 Kafka、HDFS、Spark 容器，详见 `docker-compose-full.yml`。
+
+---
+
+## 项目结构
+
+```
+├── frontend/           # Vue 3 前端
+├── backend/            # Spring Boot 后端
+├── data-pipeline/      # Python 数据处理脚本
+├── sql/                # 数据库初始化脚本
+├── data/               # 公开数据集样本
+├── docker-compose.yml  # 基础部署编排
+└── docs/               # 项目文档
+    ├── 需求说明书/
+    └── 架构设计文档/
+```
