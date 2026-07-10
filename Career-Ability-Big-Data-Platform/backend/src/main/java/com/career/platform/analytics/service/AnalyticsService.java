@@ -25,11 +25,31 @@ public class AnalyticsService {
         this.positionRepository = positionRepository;
     }
 
+    @Cacheable("stat-dashboard")
+    public Map<String, Object> dashboardSnapshot() {
+        return calculateSnapshot();
+    }
+
+    public Map<String, Object> calculateSnapshot() {
+        List<JobPosition> values = positions();
+        Map<String, Object> snapshot = new LinkedHashMap<>();
+        snapshot.put("overview", overview(values));
+        snapshot.put("positions", positionsAnalysis(values));
+        snapshot.put("salary", salary(values));
+        snapshot.put("skills", skills(values));
+        snapshot.put("education", education(values));
+        snapshot.put("city", city(values));
+        snapshot.put("company", company(values));
+        snapshot.put("trends", trends(values));
+        return snapshot;
+    }
+
     @Cacheable("stat-overview")
     public Map<String, Object> overview() {
         return overview(positions());
     }
 
+    @Cacheable(cacheNames = "stat-overview-filtered", key = "#filter.cacheKey()")
     public Map<String, Object> overviewFor(AnalyticsFilter filter) {
         return overview(filteredPositions(filter));
     }
@@ -57,6 +77,7 @@ public class AnalyticsService {
         return positionsAnalysis(positions());
     }
 
+    @Cacheable(cacheNames = "stat-position-filtered", key = "#filter.cacheKey()")
     public Map<String, Object> positionsAnalysisFor(AnalyticsFilter filter) {
         return positionsAnalysis(filteredPositions(filter));
     }
@@ -80,6 +101,7 @@ public class AnalyticsService {
         return salary(positionsForTitle(title));
     }
 
+    @Cacheable(cacheNames = "stat-salary-filtered", key = "#filter.cacheKey()")
     public Map<String, Object> salaryFor(AnalyticsFilter filter) { return salary(filteredPositions(filter)); }
 
     private Map<String, Object> salary(List<JobPosition> positions) {
@@ -115,6 +137,7 @@ public class AnalyticsService {
         return skills(positionsForTitle(title));
     }
 
+    @Cacheable(cacheNames = "stat-skills-filtered", key = "#filter.cacheKey()")
     public Map<String, Object> skillsFor(AnalyticsFilter filter) { return skills(filteredPositions(filter)); }
 
     private Map<String, Object> skills(List<JobPosition> positions) {
@@ -147,6 +170,7 @@ public class AnalyticsService {
         return education(positionsForTitle(title));
     }
 
+    @Cacheable(cacheNames = "stat-education-filtered", key = "#filter.cacheKey()")
     public Map<String, Object> educationFor(AnalyticsFilter filter) { return education(filteredPositions(filter)); }
 
     private Map<String, Object> education(List<JobPosition> positions) {
@@ -168,6 +192,7 @@ public class AnalyticsService {
         return city(positionsForTitle(title));
     }
 
+    @Cacheable(cacheNames = "stat-city-filtered", key = "#filter.cacheKey()")
     public Map<String, Object> cityFor(AnalyticsFilter filter) { return city(filteredPositions(filter)); }
 
     private Map<String, Object> city(List<JobPosition> positions) {
@@ -190,6 +215,7 @@ public class AnalyticsService {
         return company(positions());
     }
 
+    @Cacheable(cacheNames = "stat-company-filtered", key = "#filter.cacheKey()")
     public Map<String, Object> companyFor(AnalyticsFilter filter) { return company(filteredPositions(filter)); }
 
     private Map<String, Object> company(List<JobPosition> positions) {
@@ -222,6 +248,7 @@ public class AnalyticsService {
         return trends(positions());
     }
 
+    @Cacheable(cacheNames = "stat-trends-filtered", key = "#filter.cacheKey()")
     public Map<String, Object> trendsFor(AnalyticsFilter filter) { return trends(filteredPositions(filter)); }
 
     private Map<String, Object> trends(List<JobPosition> positions) {

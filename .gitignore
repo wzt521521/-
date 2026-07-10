@@ -28,6 +28,7 @@ replay_pid*
 **/node_modules/
 **/dist/
 .m2-repository/
+.runtime/
 
 # Local configuration and editors
 .env

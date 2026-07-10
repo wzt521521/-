@@ -8,7 +8,12 @@ const request = axios.create({
 
 request.interceptors.request.use((config) => {
   const token = localStorage.getItem('accessToken')
-  if (token) config.headers.Authorization = `Bearer ${token}`
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  } else if (import.meta.env.DEV && import.meta.env.VITE_DEV_USERNAME && import.meta.env.VITE_DEV_PASSWORD) {
+    const credentials = btoa(`${import.meta.env.VITE_DEV_USERNAME}:${import.meta.env.VITE_DEV_PASSWORD}`)
+    config.headers.Authorization = `Basic ${credentials}`
+  }
   return config
 })
 

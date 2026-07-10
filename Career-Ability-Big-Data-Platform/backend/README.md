@@ -9,7 +9,7 @@ mvn test
 mvn spring-boot:run
 ```
 
-默认连接 `localhost:3307/career_ability` 和 `localhost:6379`。容器内连接信息由根目录
+默认连接 `localhost:3306/career_ability`（`root/root`）和 `localhost:6379`。容器内连接信息由根目录
 `docker-compose.yml` 注入；容器环境同时设置 `SPRING_CACHE_TYPE=redis`，统计缓存 TTL 为 30 分钟。
 
 认证由同学 B 的 JWT 过滤器接入。当前模块已启用方法级鉴权，所有岗位、统计和大屏接口均要求
@@ -22,6 +22,8 @@ mvn spring-boot:run
 - `/api/stats/*`：岗位、薪资、学历、技能、城市、企业和趋势统计
 - `/api/analysis/*`：按岗位名称聚合的薪资、技能、城市和学历分析
 - `/api/dashboard/*`：数据大屏聚合接口
+
+数据大屏优先调用 `/api/dashboard/all`，后端只扫描一次岗位数据即可生成全部图表结果。
 
 统计接口接受可选的 `startDate`、`endDate`、`city`、`position` 和 `industry` 查询参数。
 离线任务默认每天 `02:00` 执行，可通过 `ANALYTICS_CRON` 覆盖。

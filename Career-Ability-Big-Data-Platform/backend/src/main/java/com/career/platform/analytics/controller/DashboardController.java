@@ -19,6 +19,9 @@ public class DashboardController {
         this.analytics = analytics;
     }
 
+    @GetMapping("/all")
+    public ApiResponse<Map<String, Object>> all() { return ApiResponse.success(analytics.dashboardSnapshot()); }
+
     @GetMapping("/overview")
     public ApiResponse<Map<String, Object>> overview() { return ApiResponse.success(analytics.overview()); }
 

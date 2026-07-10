@@ -2,10 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { Refresh, Briefcase, Coin, OfficeBuilding, TrendCharts } from '@element-plus/icons-vue'
 import ChartPanel from '../../components/ChartPanel.vue'
-import {
-  getOverview, getTrendStats, getCityStats, getSkillStats,
-  getEducationStats, getCompanyStats
-} from '../../api/analytics.js'
+import { getDashboard } from '../../api/analytics.js'
 
 const loading = ref(false)
 const loadError = ref(false)
@@ -85,15 +82,13 @@ async function load() {
   loading.value = true
   loadError.value = false
   try {
-    const [overviewData, trendData, cityData, skillData, educationData, companyData] = await Promise.all([
-      getOverview(), getTrendStats(), getCityStats(), getSkillStats(), getEducationStats(), getCompanyStats()
-    ])
-    overview.value = overviewData
-    trends.value = trendData
-    cities.value = cityData
-    skills.value = skillData
-    education.value = educationData
-    companies.value = companyData
+    const snapshot = await getDashboard()
+    overview.value = snapshot.overview
+    trends.value = snapshot.trends
+    cities.value = snapshot.city
+    skills.value = snapshot.skills
+    education.value = snapshot.education
+    companies.value = snapshot.company
     refreshedAt.value = new Date()
   } catch {
     loadError.value = true

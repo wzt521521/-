@@ -1,6 +1,7 @@
 import request from '../utils/request.js'
 
 export const getOverview = () => request.get('/stats/overview')
+export const getDashboard = () => request.get('/dashboard/all')
 export const getPositionStats = () => request.get('/stats/positions')
 export const getSalaryStats = () => request.get('/stats/salary')
 export const getSkillStats = () => request.get('/stats/skills')

@@ -29,19 +29,23 @@ public class OfflineAnalysisService {
 
     @Transactional
     @CacheEvict(cacheNames = {"stat-overview", "stat-position", "stat-salary", "stat-skills",
-            "stat-education", "stat-city", "stat-company", "stat-trends"}, allEntries = true,
+            "stat-education", "stat-city", "stat-company", "stat-trends", "stat-dashboard",
+            "stat-overview-filtered", "stat-position-filtered", "stat-salary-filtered",
+            "stat-skills-filtered", "stat-education-filtered", "stat-city-filtered",
+            "stat-company-filtered", "stat-trends-filtered"}, allEntries = true,
             beforeInvocation = true)
     public void calculateAndPersist() {
         LocalDate today = LocalDate.now();
         Date statDate = Date.valueOf(today);
-        Map<String, Object> overview = analytics.overview();
-        Map<String, Object> positions = analytics.positionsAnalysis();
-        Map<String, Object> salary = analytics.salary();
-        Map<String, Object> education = analytics.education();
-        Map<String, Object> skills = analytics.skills();
-        Map<String, Object> city = analytics.city();
-        Map<String, Object> company = analytics.company();
-        Map<String, Object> trends = analytics.trends();
+        Map<String, Object> snapshot = analytics.calculateSnapshot();
+        Map<String, Object> overview = map(snapshot.get("overview"));
+        Map<String, Object> positions = map(snapshot.get("positions"));
+        Map<String, Object> salary = map(snapshot.get("salary"));
+        Map<String, Object> education = map(snapshot.get("education"));
+        Map<String, Object> skills = map(snapshot.get("skills"));
+        Map<String, Object> city = map(snapshot.get("city"));
+        Map<String, Object> company = map(snapshot.get("company"));
+        Map<String, Object> trends = map(snapshot.get("trends"));
 
         deleteExisting(statDate);
         jdbc.update("INSERT INTO stat_position(stat_date, stat_type, total_count, new_count, hot_positions, growth_rate) VALUES (?, 'DAILY', ?, ?, ?, ?)",
@@ -112,6 +116,11 @@ public class OfflineAnalysisService {
     @SuppressWarnings("unchecked")
     private List<Map<String, Object>> list(Object value) {
         return value == null ? List.of() : (List<Map<String, Object>>) value;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> map(Object value) {
+        return value == null ? Map.of() : (Map<String, Object>) value;
     }
 
     private Number number(Object value) {

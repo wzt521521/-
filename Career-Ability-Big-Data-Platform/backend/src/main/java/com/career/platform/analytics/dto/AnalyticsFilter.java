@@ -23,4 +23,13 @@ public class AnalyticsFilter {
     public void setPosition(String position) { this.position = position; }
     public String getIndustry() { return industry; }
     public void setIndustry(String industry) { this.industry = industry; }
+
+    public String cacheKey() {
+        return String.join("|",
+                value(startDate), value(endDate), value(city), value(position), value(industry));
+    }
+
+    private String value(Object value) {
+        return value == null ? "" : value.toString().trim().toLowerCase(java.util.Locale.ROOT);
+    }
 }

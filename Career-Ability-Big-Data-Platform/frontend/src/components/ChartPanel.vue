@@ -16,8 +16,14 @@ let observer
 
 const render = async () => {
   await nextTick()
-  if (!element.value || props.empty) return
+  if (props.empty) {
+    chart?.dispose()
+    chart = undefined
+    return
+  }
+  if (!element.value) return
   if (!chart) chart = init(element.value)
+  observer?.observe(element.value)
   chart.setOption(props.option, true)
 }
 
@@ -25,9 +31,8 @@ watch(() => props.option, render, { deep: true })
 watch(() => props.empty, render)
 
 onMounted(() => {
-  render()
   observer = new ResizeObserver(() => chart?.resize())
-  observer.observe(element.value)
+  render()
 })
 
 onBeforeUnmount(() => {

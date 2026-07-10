@@ -14,14 +14,16 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class AnalyticsServiceTest {
     private AnalyticsService analytics;
+    private PositionRepository repository;
 
     @BeforeEach
     void setUp() {
-        PositionRepository repository = mock(PositionRepository.class);
+        repository = mock(PositionRepository.class);
         when(repository.findAllWithCompany()).thenReturn(List.of(
                 position("Java工程师", "上海", 10, 20, List.of("Java", "MySQL", "Java")),
                 position("数据工程师", "杭州", 20, 30, List.of("Python", "MySQL")),
@@ -65,12 +67,20 @@ class AnalyticsServiceTest {
         filter.setPosition("Java");
         filter.setIndustry("互联网");
         assertThat(analytics.overviewFor(filter)).containsEntry("totalPositions", 1);
+        assertThat(filter.cacheKey()).contains("上海").contains("java").contains("互联网");
 
         filter.setStartDate(LocalDate.now());
         filter.setEndDate(LocalDate.now().minusDays(1));
         assertThatThrownBy(() -> analytics.salaryFor(filter))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("startDate");
+    }
+
+    @Test
+    void calculatesTheWholeDashboardWithOneDatabaseRead() {
+        assertThat(analytics.calculateSnapshot()).containsKeys(
+                "overview", "positions", "salary", "skills", "education", "city", "company", "trends");
+        verify(repository).findAllWithCompany();
     }
 
     private JobPosition position(String title, String city, int min, int max, List<String> skills) {
