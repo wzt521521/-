@@ -12,6 +12,7 @@
 
 # Package Files #
 *.jar
+!**/.mvn/wrapper/maven-wrapper.jar
 *.war
 *.nar
 *.ear
@@ -27,6 +28,7 @@ replay_pid*
 **/target/
 **/node_modules/
 **/dist/
+**/.vite/
 .m2-repository/
 .runtime/
 
@@ -34,6 +36,16 @@ replay_pid*
 .env
 .env.*
 !.env.example
+.codegraph/
+
+# Python caches
+**/__pycache__/
+**/.pytest_cache/
+*.py[cod]
+
+# Operating-system files
+.DS_Store
+Thumbs.db
 .idea/
 .vscode/
 *.iml
