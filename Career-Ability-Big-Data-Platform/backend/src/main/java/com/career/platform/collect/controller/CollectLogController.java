@@ -18,19 +18,19 @@ public class CollectLogController {
     }
 
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('collect:view')")
     public ApiResponse<List<CollectLog>> list() {
         return ApiResponse.success(service.list());
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('collect:view')")
     public ApiResponse<CollectLog> getById(@PathVariable Long id) {
         return ApiResponse.success(service.getById(id));
     }
 
     @GetMapping("/by-task/{taskId}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('collect:view')")
     public ApiResponse<List<CollectLog>> listByTaskId(@PathVariable Long taskId) {
         return ApiResponse.success(service.listByTaskId(taskId));
     }
