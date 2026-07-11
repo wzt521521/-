@@ -1,20 +1,145 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import MainLayout from '../layout/MainLayout.vue'
+import { useUserStore } from '../stores/user'
+import { hasAnyPermission } from '../utils/permission'
 
-export default createRouter({
+const routes = [
+  {
+    path: '/login',
+    name: 'Login',
+    component: () => import('../views/auth/LoginView.vue'),
+    meta: { title: '账号登录', guestOnly: true },
+  },
+  {
+    path: '/register',
+    name: 'Register',
+    component: () => import('../views/auth/RegisterView.vue'),
+    meta: { title: '创建账号', guestOnly: true },
+  },
+  {
+    path: '/',
+    component: MainLayout,
+    redirect: '/dashboard',
+    children: [
+      {
+        path: 'dashboard',
+        name: 'Dashboard',
+        component: () => import('../views/dashboard/DashboardView.vue'),
+        meta: { title: '就业数据大屏', section: '数据分析', requiresAuth: true },
+      },
+      {
+        path: 'positions',
+        name: 'Positions',
+        component: () => import('../views/positions/PositionView.vue'),
+        meta: { title: '岗位分析', section: '数据分析', requiresAuth: true },
+      },
+      {
+        path: 'collect/sources',
+        name: 'CollectSources',
+        component: () => import('../views/collect/CollectSourceView.vue'),
+        meta: { title: '数据源管理', section: '采集管理', requiresAuth: true },
+      },
+      {
+        path: 'collect/tasks',
+        name: 'CollectTasks',
+        component: () => import('../views/collect/CollectTaskView.vue'),
+        meta: { title: '采集任务管理', section: '采集管理', requiresAuth: true },
+      },
+      {
+        path: 'collect/logs',
+        name: 'CollectLogs',
+        component: () => import('../views/collect/CollectLogView.vue'),
+        meta: { title: '采集执行日志', section: '采集管理', requiresAuth: true },
+      },
+      {
+        path: 'home',
+        name: 'Home',
+        component: () => import('../views/home/HomeView.vue'),
+        meta: { title: '工作台', section: '账户', requiresAuth: true },
+      },
+      {
+        path: 'profile',
+        name: 'Profile',
+        component: () => import('../views/auth/ProfileView.vue'),
+        meta: { title: '个人资料', section: '个人中心', requiresAuth: true },
+      },
+      {
+        path: 'system/users',
+        name: 'SystemUsers',
+        component: () => import('../views/system/UserListView.vue'),
+        meta: { title: '用户管理', section: '系统管理', requiresAuth: true, permissions: ['user:read'] },
+      },
+      {
+        path: 'system/roles',
+        name: 'SystemRoles',
+        component: () => import('../views/system/RoleListView.vue'),
+        meta: { title: '角色权限', section: '系统管理', requiresAuth: true, permissions: ['role:read'] },
+      },
+      {
+        path: 'system/logs',
+        name: 'OperationLogs',
+        component: () => import('../views/system/OperationLogView.vue'),
+        meta: { title: '操作日志', section: '系统管理', requiresAuth: true, permissions: ['log:read'] },
+      },
+      {
+        path: 'open-api/keys',
+        name: 'ApiKeys',
+        component: () => import('../views/open-api/ApiKeyView.vue'),
+        meta: { title: 'API Key', section: '开发者服务', requiresAuth: true, permissions: ['api:view'] },
+      },
+      {
+        path: 'open-api/calls',
+        name: 'ApiCalls',
+        component: () => import('../views/open-api/ApiCallLogView.vue'),
+        meta: { title: '调用统计', section: '开发者服务', requiresAuth: true, permissions: ['api:view'] },
+      },
+      {
+        path: 'api-docs',
+        name: 'ApiDocs',
+        component: () => import('../views/open-api/ApiDocsView.vue'),
+        meta: { title: 'API 文档', section: '开发者服务', requiresAuth: true, permissions: ['api:docs', 'api:view'] },
+      },
+    ],
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    redirect: '/dashboard',
+  },
+]
+
+const router = createRouter({
   history: createWebHistory(),
-  routes: [
-    {
-      path: '/',
-      component: MainLayout,
-      children: [
-        { path: '', redirect: '/dashboard' },
-        { path: 'dashboard', component: () => import('../views/dashboard/DashboardView.vue'), meta: { title: '就业数据大屏' } },
-        { path: 'positions', component: () => import('../views/positions/PositionView.vue'), meta: { title: '岗位分析' } },
-        { path: 'collect/sources', component: () => import('../views/collect/CollectSourceView.vue'), meta: { title: '数据源管理' } },
-        { path: 'collect/tasks', component: () => import('../views/collect/CollectTaskView.vue'), meta: { title: '采集任务管理' } },
-        { path: 'collect/logs', component: () => import('../views/collect/CollectLogView.vue'), meta: { title: '采集执行日志' } }
-      ]
-    }
-  ]
+  routes,
 })
+
+router.beforeEach(async (to) => {
+  const userStore = useUserStore()
+
+  if (userStore.isAuthenticated && !userStore.validated) {
+    try {
+      await userStore.validateSession()
+    } catch {
+      userStore.clearLocalSession()
+    }
+  }
+
+  if (to.meta.guestOnly && userStore.isAuthenticated) {
+    return '/dashboard'
+  }
+
+  if (to.matched.some((record) => record.meta.requiresAuth) && !userStore.isAuthenticated) {
+    return { name: 'Login', query: { redirect: to.fullPath } }
+  }
+
+  const permissions = to.meta.permissions || []
+  if (!hasAnyPermission(userStore.userInfo, permissions)) {
+    return '/dashboard'
+  }
+
+  document.title = to.meta.title
+    ? `${to.meta.title} - 职业能力大数据服务平台`
+    : '职业能力大数据服务平台'
+  return true
+})
+
+export default router
