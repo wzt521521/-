@@ -1,5 +1,9 @@
 import request from '../utils/request.js'
 
-export const getPositions = (params) => request.get('/positions', { params })
-export const getPosition = (id) => request.get(`/positions/${id}`)
-export const getSuggestions = (keyword) => request.get('/positions/search/suggest', { params: { keyword } })
+const dataOf = (response) => response.data
+
+export const getPositions = (params) => request.get('/positions', { params }).then(dataOf)
+export const getPosition = (id) => request.get(`/positions/${id}`).then(dataOf)
+export const getSuggestions = (keyword) => request
+  .get('/positions/search/suggest', { params: { keyword } })
+  .then(dataOf)

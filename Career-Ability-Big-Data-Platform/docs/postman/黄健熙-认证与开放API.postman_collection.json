@@ -1,0 +1,275 @@
+{
+  "info": {
+    "_postman_id": "f4cc9d31-7f35-4f2f-a090-c8a19c25b968",
+    "name": "黄健熙-认证与开放 API",
+    "description": "注册、登录、刷新、权限拒绝、API Key 和开放接口双认证联调集合。按顺序运行。",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080", "type": "string" },
+    { "key": "studentUsername", "value": "", "type": "string" },
+    { "key": "studentPassword", "value": "student123", "type": "string" },
+    { "key": "studentAccessToken", "value": "", "type": "string" },
+    { "key": "studentRefreshToken", "value": "", "type": "string" },
+    { "key": "adminUsername", "value": "admin", "type": "string" },
+    { "key": "adminPassword", "value": "admin123", "type": "string" },
+    { "key": "adminAccessToken", "value": "", "type": "string" },
+    { "key": "adminRefreshToken", "value": "", "type": "string" },
+    { "key": "apiKey", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "01 认证流程",
+      "item": [
+        {
+          "name": "01 注册学生",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('studentUsername', 'student' + Date.now().toString().slice(-8));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('注册成功', () => pm.response.to.have.status(200));",
+                  "pm.test('密码未返回', () => pm.expect(pm.response.text()).not.to.include('student123'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{studentUsername}}\",\n  \"password\": \"{{studentPassword}}\",\n  \"roleCode\": \"ROLE_STUDENT\",\n  \"realName\": \"接口测试学生\",\n  \"college\": \"计算机学院\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/register"
+          }
+        },
+        {
+          "name": "02 学生登录",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('登录成功', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json().data;",
+                  "pm.collectionVariables.set('studentAccessToken', data.accessToken);",
+                  "pm.collectionVariables.set('studentRefreshToken', data.refreshToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{studentUsername}}\",\n  \"password\": \"{{studentPassword}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        },
+        {
+          "name": "03 查询当前学生",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('当前用户可访问', () => pm.response.to.have.status(200));",
+                  "pm.test('角色正确', () => pm.expect(pm.response.json().data.roles).to.include('ROLE_STUDENT'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{studentAccessToken}}" }],
+            "url": "{{baseUrl}}/api/auth/me"
+          }
+        },
+        {
+          "name": "04 刷新并轮换 Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('刷新成功', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json().data;",
+                  "pm.collectionVariables.set('studentAccessToken', data.accessToken);",
+                  "pm.collectionVariables.set('studentRefreshToken', data.refreshToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{studentRefreshToken}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/refresh"
+          }
+        },
+        {
+          "name": "05 学生访问管理员接口被拒绝",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('返回 403', () => pm.response.to.have.status(403));",
+                  "pm.test('响应码一致', () => pm.expect(pm.response.json().code).to.eql(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{studentAccessToken}}" }],
+            "url": "{{baseUrl}}/api/admin/users?page=0&size=20"
+          }
+        },
+        {
+          "name": "06 管理员登录",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('管理员登录成功', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json().data;",
+                  "pm.collectionVariables.set('adminAccessToken', data.accessToken);",
+                  "pm.collectionVariables.set('adminRefreshToken', data.refreshToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{adminUsername}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 开放 API 流程",
+      "item": [
+        {
+          "name": "01 创建 API Key",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('API Key 创建成功', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json().data;",
+                  "pm.expect(data.apiKey).to.be.a('string').and.not.empty;",
+                  "pm.collectionVariables.set('apiKey', data.apiKey);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminAccessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"appName\": \"Postman 联调\",\n  \"rateLimit\": 100\n}"
+            },
+            "url": "{{baseUrl}}/api/admin/api-keys"
+          }
+        },
+        {
+          "name": "02 缺少 API Key 被拒绝",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('返回 401', () => pm.response.to.have.status(401));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminAccessToken}}" }],
+            "url": "{{baseUrl}}/api/open/v1/platform/status"
+          }
+        },
+        {
+          "name": "03 双认证访问开放接口",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('开放接口成功', () => pm.response.to.have.status(200));",
+                  "pm.test('包含限流响应头', () => {",
+                  "  pm.expect(pm.response.headers.get('X-RateLimit-Limit')).to.eql('100');",
+                  "  pm.expect(pm.response.headers.get('X-RateLimit-Remaining')).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminAccessToken}}" },
+              { "key": "X-API-Key", "value": "{{apiKey}}" }
+            ],
+            "url": "{{baseUrl}}/api/open/v1/platform/status"
+          }
+        },
+        {
+          "name": "04 查询调用统计",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('统计查询成功', () => pm.response.to.have.status(200));",
+                  "pm.test('至少记录一次调用', () => pm.expect(pm.response.json().data.totalCalls).to.be.above(0));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminAccessToken}}" }],
+            "url": "{{baseUrl}}/api/admin/api-call-statistics"
+          }
+        }
+      ]
+    }
+  ]
+}

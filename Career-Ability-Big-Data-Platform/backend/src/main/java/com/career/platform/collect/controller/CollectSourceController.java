@@ -18,31 +18,31 @@ public class CollectSourceController {
     }
 
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('collect:view')")
     public ApiResponse<List<CollectSource>> list() {
         return ApiResponse.success(service.list());
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('collect:view')")
     public ApiResponse<CollectSource> getById(@PathVariable Long id) {
         return ApiResponse.success(service.getById(id));
     }
 
     @PostMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('collect:toggle')")
     public ApiResponse<CollectSource> create(@RequestBody CollectSource source) {
         return ApiResponse.success(service.create(source));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('collect:toggle')")
     public ApiResponse<CollectSource> update(@PathVariable Long id, @RequestBody CollectSource source) {
         return ApiResponse.success(service.update(id, source));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('collect:toggle')")
     public ApiResponse<Void> delete(@PathVariable Long id) {
         service.delete(id);
         return ApiResponse.success(null);

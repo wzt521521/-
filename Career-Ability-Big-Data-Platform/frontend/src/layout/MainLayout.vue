@@ -1,90 +1,602 @@
 <script setup>
-import { computed, ref } from 'vue'
-import { useRoute } from 'vue-router'
-import { DataAnalysis, Fold, Histogram, Menu as MenuIcon, Monitor, Document } from '@element-plus/icons-vue'
+import { computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import {
+  ArrowRight,
+  Connection,
+  DataAnalysis,
+  Document,
+  Fold,
+  Histogram,
+  HomeFilled,
+  Key,
+  List,
+  Menu as MenuIcon,
+  Monitor,
+  Operation,
+  Setting,
+  User,
+  UserFilled,
+} from '@element-plus/icons-vue'
+import { useAppStore } from '../stores/app'
+import { useUserStore } from '../stores/user'
+import { hasAnyPermission } from '../utils/permission'
 
-const collapsed = ref(false)
 const route = useRoute()
-const title = computed(() => route.meta.title || '职业能力大数据服务平台')
+const router = useRouter()
+const appStore = useAppStore()
+const userStore = useUserStore()
+
+const roleLabels = {
+  ROLE_ADMIN: '系统管理员',
+  ROLE_STUDENT: '学生',
+  ROLE_TEACHER: '教师',
+  ROLE_ANALYST: '数据分析员',
+  ROLE_COLLEGE_ADMIN: '学院管理员',
+}
+
+const menuGroups = computed(() => [
+  {
+    label: '数据分析',
+    items: [
+      { path: '/dashboard', label: '就业数据大屏', icon: DataAnalysis, requiresAuth: true },
+      { path: '/positions', label: '岗位分析', icon: Histogram, requiresAuth: true },
+    ],
+  },
+  {
+    label: '采集管理',
+    items: [
+      { path: '/collect/sources', label: '数据源管理', icon: Document, requiresAuth: true },
+      { path: '/collect/tasks', label: '采集任务管理', icon: Monitor, requiresAuth: true },
+      { path: '/collect/logs', label: '采集执行日志', icon: List, requiresAuth: true },
+    ],
+  },
+  {
+    label: '账户',
+    items: [
+      { path: '/home', label: '工作台', icon: HomeFilled, requiresAuth: true },
+      { path: '/profile', label: '个人资料', icon: User, requiresAuth: true },
+    ],
+  },
+  {
+    label: '系统管理',
+    items: [
+      { path: '/system/users', label: '用户管理', icon: UserFilled, requiresAuth: true, permissions: ['user:read'] },
+      { path: '/system/roles', label: '角色权限', icon: Setting, requiresAuth: true, permissions: ['role:read'] },
+      { path: '/system/logs', label: '操作日志', icon: List, requiresAuth: true, permissions: ['log:read'] },
+    ],
+  },
+  {
+    label: '开发者服务',
+    items: [
+      { path: '/open-api/keys', label: 'API Key', icon: Key, requiresAuth: true, permissions: ['api:view'] },
+      { path: '/open-api/calls', label: '调用统计', icon: DataAnalysis, requiresAuth: true, permissions: ['api:view'] },
+      { path: '/api-docs', label: 'API 文档', icon: Document, requiresAuth: true, permissions: ['api:docs', 'api:view'] },
+    ],
+  },
+].map((group) => ({
+  ...group,
+  items: group.items.filter((item) => (
+    (!item.requiresAuth || userStore.isAuthenticated)
+    && hasAnyPermission(userStore.userInfo, item.permissions || [])
+  )),
+})).filter((group) => group.items.length))
+
+const currentTitle = computed(() => route.meta.title || '就业数据大屏')
+const currentSection = computed(() => route.meta.section || '数据分析')
+const currentRole = computed(() => {
+  const role = userStore.userInfo?.roles?.[0]
+  return roleLabels[role] || role || '平台用户'
+})
+const userInitial = computed(() => userStore.displayName.trim().charAt(0).toUpperCase() || 'U')
+
+async function handleCommand(command) {
+  if (command === 'profile') {
+    await router.push('/profile')
+    return
+  }
+  if (command === 'logout') {
+    await userStore.logout()
+    await router.replace('/login')
+  }
+}
 </script>
 
 <template>
-  <div class="app-shell" :class="{ collapsed }">
-    <aside class="sidebar">
-      <div class="brand">
-        <span class="brand-mark">职</span>
-        <div v-show="!collapsed" class="brand-copy">
+  <div class="app-shell">
+    <aside
+      class="sidebar"
+      :class="{ collapsed: appStore.sidebarCollapsed }"
+    >
+      <RouterLink
+        to="/dashboard"
+        class="brand-block"
+      >
+        <div class="brand-mark">
+          CA
+        </div>
+        <div
+          v-if="!appStore.sidebarCollapsed"
+          class="brand-copy"
+        >
           <strong>职业能力平台</strong>
-          <small>CAREER INTELLIGENCE</small>
+          <span>管理控制台</span>
+        </div>
+      </RouterLink>
+
+      <el-menu
+        :default-active="route.path"
+        :collapse="appStore.sidebarCollapsed"
+        :collapse-transition="false"
+        router
+        class="side-menu"
+      >
+        <template
+          v-for="(group, groupIndex) in menuGroups"
+          :key="group.label"
+        >
+          <div
+            v-if="!appStore.sidebarCollapsed"
+            class="menu-group-label"
+          >
+            {{ group.label }}
+          </div>
+          <div
+            v-else-if="groupIndex > 0"
+            class="menu-divider"
+          />
+          <el-menu-item
+            v-for="item in group.items"
+            :key="item.path"
+            :index="item.path"
+          >
+            <el-icon><component :is="item.icon" /></el-icon>
+            <template #title>
+              {{ item.label }}
+            </template>
+          </el-menu-item>
+        </template>
+      </el-menu>
+    </aside>
+
+    <el-drawer
+      v-model="appStore.mobileMenuOpen"
+      direction="ltr"
+      :with-header="false"
+      size="260px"
+      class="mobile-drawer"
+    >
+      <div class="mobile-brand">
+        <div class="brand-mark">
+          CA
+        </div>
+        <div class="brand-copy">
+          <strong>职业能力平台</strong>
+          <span>管理控制台</span>
         </div>
       </div>
-      <nav aria-label="主导航">
-        <router-link to="/dashboard" title="就业数据大屏">
-          <el-icon><DataAnalysis /></el-icon><span v-show="!collapsed">就业数据大屏</span>
-        </router-link>
-        <router-link to="/positions" title="岗位分析">
-          <el-icon><Histogram /></el-icon><span v-show="!collapsed">岗位分析</span>
-        </router-link>
-        <div class="nav-divider" v-show="!collapsed">采集管理</div>
-        <router-link to="/collect/sources" title="数据源管理">
-          <el-icon><Document /></el-icon><span v-show="!collapsed">数据源管理</span>
-        </router-link>
-        <router-link to="/collect/tasks" title="采集任务管理">
-          <el-icon><Monitor /></el-icon><span v-show="!collapsed">采集任务管理</span>
-        </router-link>
-        <router-link to="/collect/logs" title="采集执行日志">
-          <el-icon><DataAnalysis /></el-icon><span v-show="!collapsed">采集执行日志</span>
-        </router-link>
-      </nav>
-      <button class="collapse-button" type="button" :title="collapsed ? '展开导航' : '收起导航'" @click="collapsed = !collapsed">
-        <el-icon><MenuIcon v-if="collapsed" /><Fold v-else /></el-icon>
-      </button>
-    </aside>
-    <main>
+      <el-menu
+        :default-active="route.path"
+        router
+        @select="appStore.closeMobileMenu"
+      >
+        <template
+          v-for="group in menuGroups"
+          :key="group.label"
+        >
+          <div class="mobile-group-label">
+            {{ group.label }}
+          </div>
+          <el-menu-item
+            v-for="item in group.items"
+            :key="item.path"
+            :index="item.path"
+          >
+            <el-icon><component :is="item.icon" /></el-icon>
+            <span>{{ item.label }}</span>
+          </el-menu-item>
+        </template>
+      </el-menu>
+    </el-drawer>
+
+    <div class="main-column">
       <header class="topbar">
-        <div>
-          <span class="section-label">就业市场观测台</span>
-          <h1>{{ title }}</h1>
+        <div class="topbar-left">
+          <el-button
+            class="desktop-toggle"
+            text
+            :icon="appStore.sidebarCollapsed ? MenuIcon : Fold"
+            title="切换侧边栏"
+            @click="appStore.toggleSidebar"
+          />
+          <el-button
+            class="mobile-toggle"
+            text
+            :icon="MenuIcon"
+            title="打开菜单"
+            @click="appStore.openMobileMenu"
+          />
+          <nav
+            class="topbar-breadcrumb"
+            aria-label="当前位置"
+          >
+            <span>{{ currentSection }}</span>
+            <el-icon><ArrowRight /></el-icon>
+            <strong>{{ currentTitle }}</strong>
+          </nav>
         </div>
-        <div class="data-status"><span /> 数据服务</div>
+
+        <RouterLink
+          v-if="!userStore.isAuthenticated"
+          to="/login"
+          class="login-trigger"
+        >
+          <el-icon><User /></el-icon>
+          <span>登录</span>
+        </RouterLink>
+        <el-dropdown
+          v-else
+          @command="handleCommand"
+        >
+          <button
+            type="button"
+            class="user-trigger"
+            aria-label="打开用户菜单"
+          >
+            <el-avatar :size="32">
+              {{ userInitial }}
+            </el-avatar>
+            <span class="user-copy">
+              <strong>{{ userStore.displayName }}</strong>
+              <small>{{ currentRole }}</small>
+            </span>
+          </button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item
+                command="profile"
+                :icon="Operation"
+              >
+                个人资料
+              </el-dropdown-item>
+              <el-dropdown-item
+                command="logout"
+                :icon="Connection"
+                divided
+              >
+                退出登录
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
       </header>
-      <router-view />
-    </main>
+
+      <main class="main-content">
+        <RouterView v-slot="{ Component, route: viewRoute }">
+          <Transition
+            name="app-route"
+            mode="out-in"
+          >
+            <component
+              :is="Component"
+              :key="viewRoute.path"
+            />
+          </Transition>
+        </RouterView>
+      </main>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.app-shell { min-height: 100vh; padding-left: 224px; transition: padding-left .2s ease; }
-.app-shell.collapsed { padding-left: 72px; }
-.sidebar { position: fixed; inset: 0 auto 0 0; z-index: 20; display: flex; width: 224px; flex-direction: column; overflow: hidden; background: #17201f; color: #fff; transition: width .2s ease; }
-.collapsed .sidebar { width: 72px; }
-.brand { display: flex; height: 76px; align-items: center; gap: 11px; padding: 0 18px; border-bottom: 1px solid rgba(255,255,255,.1); white-space: nowrap; }
-.brand-mark { display: grid; width: 36px; height: 36px; flex: 0 0 36px; place-items: center; border-radius: 5px; background: #e16f50; font-size: 18px; font-weight: 700; }
-.brand-copy { display: flex; flex-direction: column; gap: 2px; }
-.brand-copy strong { font-size: 15px; letter-spacing: 0; }
-.brand-copy small { color: #91a39f; font-size: 9px; letter-spacing: 0; }
-nav { display: flex; flex: 1; flex-direction: column; gap: 4px; padding: 18px 10px; }
-nav a { display: flex; height: 44px; align-items: center; gap: 12px; padding: 0 14px; border-left: 3px solid transparent; border-radius: 4px; color: #aebbb8; font-size: 14px; text-decoration: none; white-space: nowrap; }
-nav a:hover { background: rgba(255,255,255,.06); color: #fff; }
-nav a.router-link-active { border-left-color: #e16f50; background: rgba(255,255,255,.09); color: #fff; }
-nav .el-icon { flex: 0 0 18px; font-size: 18px; }
-.nav-divider { padding: 12px 14px 4px; color: #6a7d79; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; }
-.collapse-button { display: grid; width: 44px; height: 44px; margin: 0 14px 16px; place-items: center; border: 0; border-radius: 4px; background: transparent; color: #91a39f; cursor: pointer; }
-.collapse-button:hover { background: rgba(255,255,255,.08); color: #fff; }
-main { min-width: 0; }
-.topbar { display: flex; min-height: 76px; align-items: center; justify-content: space-between; padding: 12px 28px; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.94); }
-.section-label { color: var(--muted); font-size: 11px; }
-.topbar h1 { margin: 3px 0 0; color: var(--ink); font-size: 20px; font-weight: 680; }
-.data-status { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
-.data-status span { width: 7px; height: 7px; border-radius: 50%; background: #2a9d78; box-shadow: 0 0 0 3px rgba(42,157,120,.12); }
-@media (max-width: 760px) {
-  .app-shell, .app-shell.collapsed { padding-left: 0; padding-bottom: 62px; }
-  .sidebar, .collapsed .sidebar { inset: auto 0 0 0; width: 100%; height: 62px; flex-direction: row; }
-  .brand, .collapse-button { display: none; }
-  nav { flex-direction: row; justify-content: space-around; padding: 7px; }
-  nav a { height: 48px; border-left: 0; border-bottom: 3px solid transparent; padding: 0 16px; }
-  nav a.router-link-active { border-left-color: transparent; border-bottom-color: #e16f50; }
-  .topbar { min-height: 68px; padding: 10px 16px; }
-  .data-status { display: none; }
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  width: var(--sidebar-width);
+  height: 100vh;
+  flex: 0 0 var(--sidebar-width);
+  overflow: hidden;
+  border-right: 1px solid var(--app-border);
+  background: var(--app-surface-subtle);
+  transition:
+    width var(--motion-duration-base) var(--motion-ease-standard),
+    flex-basis var(--motion-duration-base) var(--motion-ease-standard);
+}
+
+.sidebar.collapsed {
+  width: var(--sidebar-width-collapsed);
+  flex-basis: var(--sidebar-width-collapsed);
+}
+
+.brand-block {
+  display: flex;
+  height: var(--topbar-height);
+  align-items: center;
+  gap: var(--space-3);
+  padding: 0 var(--space-4);
+  border-bottom: 1px solid var(--app-border);
+  color: inherit;
+  transition: background-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.brand-block:hover {
+  background: var(--app-surface-muted);
+}
+
+.sidebar.collapsed .brand-block {
+  justify-content: center;
+  padding: 0;
+}
+
+.brand-mark {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  place-items: center;
+  border-radius: var(--radius-6);
+  background: var(--app-accent);
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.brand-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.brand-copy strong {
+  overflow: hidden;
+  color: var(--app-text);
+  font-size: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.brand-copy span {
+  margin-top: 3px;
+  color: var(--app-muted);
+  font-size: 11px;
+}
+
+.side-menu {
+  height: calc(100vh - var(--topbar-height));
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: var(--space-2) 0 var(--space-5);
+  border-right: 0;
+  background: transparent;
+}
+
+.menu-group-label,
+.mobile-group-label {
+  color: var(--app-muted);
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.menu-group-label {
+  padding: var(--space-4) var(--space-4) var(--space-2);
+}
+
+.menu-group-label:first-child {
+  padding-top: var(--space-2);
+}
+
+.menu-divider {
+  height: 1px;
+  margin: var(--space-3) var(--space-4);
+  background: var(--app-border);
+}
+
+.main-column {
+  min-width: 0;
+  flex: 1;
+  background: var(--app-bg);
+}
+
+.topbar {
+  position: sticky;
+  z-index: 10;
+  top: 0;
+  display: flex;
+  height: var(--topbar-height);
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-6);
+  border-bottom: 1px solid var(--app-border);
+  background: rgb(255 255 255 / 96%);
+  backdrop-filter: blur(8px);
+}
+
+.topbar-left {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.topbar-breadcrumb {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--app-muted);
+  font-size: var(--font-size-13);
+}
+
+.topbar-breadcrumb .el-icon {
+  flex: 0 0 auto;
+  font-size: 12px;
+}
+
+.topbar-breadcrumb strong {
+  overflow: hidden;
+  color: var(--app-text);
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobile-toggle {
+  display: none;
+}
+
+.user-trigger {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border: 0;
+  border-radius: var(--radius-6);
+  background: transparent;
+  color: var(--app-text-regular);
+  cursor: pointer;
+  transition:
+    color var(--motion-duration-fast) var(--motion-ease-standard),
+    background-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.user-trigger:hover {
+  background: var(--app-surface-muted);
+  color: var(--app-text);
+}
+
+.login-trigger {
+  display: inline-flex;
+  height: var(--control-height-lg);
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-6);
+  color: var(--app-text-regular);
+  font-size: var(--font-size-13);
+  font-weight: var(--font-weight-semibold);
+  transition:
+    color var(--motion-duration-fast) var(--motion-ease-standard),
+    background-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.login-trigger:hover {
+  background: var(--app-surface-muted);
+  color: var(--app-text);
+}
+
+.user-trigger :deep(.el-avatar) {
+  flex: 0 0 auto;
+  background: var(--color-brand-100);
+  color: var(--color-brand-700);
+  font-weight: var(--font-weight-semibold);
+}
+
+.user-copy {
+  display: flex;
+  max-width: 140px;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.25;
+}
+
+.user-copy strong,
+.user-copy small {
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-copy strong {
+  color: var(--app-text);
+  font-size: var(--font-size-13);
+  font-weight: var(--font-weight-semibold);
+}
+
+.user-copy small {
+  margin-top: 2px;
+  color: var(--app-muted);
+  font-size: 11px;
+}
+
+.main-content {
+  width: 100%;
+  max-width: 1680px;
+  min-width: 0;
+  margin: 0 auto;
+  padding: var(--space-6);
+}
+
+.mobile-brand {
+  display: flex;
+  height: var(--topbar-height);
+  align-items: center;
+  gap: var(--space-3);
+  padding: 0 var(--space-4);
+  border-bottom: 1px solid var(--app-border);
+  color: var(--app-text);
+}
+
+.mobile-group-label {
+  padding: var(--space-5) var(--space-4) var(--space-2);
+}
+
+.mobile-group-label:first-child {
+  padding-top: var(--space-4);
+}
+
+:global(.mobile-drawer .el-drawer__body) {
+  padding: 0;
+}
+
+:global(.mobile-drawer .el-menu) {
+  border-right: 0;
+}
+
+@media (max-width: 900px) {
+  .sidebar {
+    display: none;
+  }
+
+  .desktop-toggle {
+    display: none;
+  }
+
+  .mobile-toggle {
+    display: inline-flex;
+  }
+
+  .main-content {
+    padding: var(--space-4);
+  }
+}
+
+@media (max-width: 520px) {
+  .topbar {
+    padding: 0 var(--space-3);
+  }
+
+  .topbar-breadcrumb > span,
+  .topbar-breadcrumb > .el-icon {
+    display: none;
+  }
+
+  .user-copy {
+    display: none;
+  }
+
+  .main-content {
+    padding: var(--space-3);
+  }
 }
 </style>

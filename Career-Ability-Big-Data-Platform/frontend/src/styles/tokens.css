@@ -1,0 +1,146 @@
+:root {
+  color-scheme: light;
+
+  /* Typography */
+  --font-family-sans: Inter, "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+  --font-family-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --font-size-12: 12px;
+  --font-size-13: 13px;
+  --font-size-14: 14px;
+  --font-size-16: 16px;
+  --font-size-18: 18px;
+  --font-size-22: 22px;
+  --font-size-28: 28px;
+  --line-height-tight: 1.25;
+  --line-height-base: 1.5;
+  --line-height-relaxed: 1.65;
+  --font-weight-regular: 400;
+  --font-weight-medium: 550;
+  --font-weight-semibold: 650;
+  --font-weight-bold: 700;
+
+  /* Neutral palette */
+  --color-neutral-0: #ffffff;
+  --color-neutral-25: #fbfcfc;
+  --color-neutral-50: #f5f7f6;
+  --color-neutral-100: #edf1ef;
+  --color-neutral-200: #dce4e1;
+  --color-neutral-300: #c5d0cc;
+  --color-neutral-400: #93a29c;
+  --color-neutral-500: #66756f;
+  --color-neutral-600: #4d5d57;
+  --color-neutral-700: #34443e;
+  --color-neutral-800: #24322d;
+  --color-neutral-900: #17221f;
+
+  /* Brand palette */
+  --color-brand-50: #edf7f4;
+  --color-brand-100: #d8eee7;
+  --color-brand-200: #b6ddd2;
+  --color-brand-300: #88c3b3;
+  --color-brand-400: #55a48f;
+  --color-brand-500: #2c846d;
+  --color-brand-600: #176b57;
+  --color-brand-700: #0f5545;
+  --color-brand-800: #0c4337;
+  --color-brand-900: #0b352d;
+
+  /* Semantic palette */
+  --color-info-50: #eef4ff;
+  --color-info-100: #dce8ff;
+  --color-info-300: #95b7ff;
+  --color-info-500: #4f80ec;
+  --color-info-600: #2f6fed;
+  --color-info-700: #2459c7;
+  --color-success-50: #edf8f3;
+  --color-success-100: #d8eee5;
+  --color-success-300: #8cc9ae;
+  --color-success-500: #34936d;
+  --color-success-600: #237d5a;
+  --color-success-700: #196346;
+  --color-warning-50: #fff7e8;
+  --color-warning-100: #fde9bd;
+  --color-warning-300: #e6bd69;
+  --color-warning-500: #c18a2f;
+  --color-warning-600: #a96708;
+  --color-warning-700: #87520a;
+  --color-danger-50: #fff1f2;
+  --color-danger-100: #fbdcdf;
+  --color-danger-300: #df9095;
+  --color-danger-500: #c95157;
+  --color-danger-600: #b9383d;
+  --color-danger-700: #942d32;
+
+  /* Data visualization palette */
+  --chart-color-1: var(--color-brand-600);
+  --chart-color-2: #3b6fd8;
+  --chart-color-3: #20858c;
+  --chart-color-4: #c48722;
+  --chart-color-5: #c44e52;
+  --chart-color-6: #7667a8;
+  --chart-grid-color: var(--color-neutral-200);
+  --chart-axis-color: var(--color-neutral-500);
+
+  /* Semantic surfaces and text */
+  --app-bg: var(--color-neutral-50);
+  --app-surface: var(--color-neutral-0);
+  --app-surface-subtle: var(--color-neutral-25);
+  --app-surface-muted: var(--color-neutral-100);
+  --app-text: var(--color-neutral-900);
+  --app-text-regular: var(--color-neutral-700);
+  --app-muted: var(--color-neutral-500);
+  --app-disabled: var(--color-neutral-400);
+  --app-border: var(--color-neutral-200);
+  --app-border-strong: var(--color-neutral-300);
+  --app-accent: var(--color-brand-600);
+  --app-accent-strong: var(--color-brand-700);
+  --app-info: var(--color-info-600);
+  --app-success: var(--color-success-600);
+  --app-warning: var(--color-warning-600);
+  --app-danger: var(--color-danger-600);
+
+  /* Spacing */
+  --space-0: 0;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Stable component dimensions */
+  --control-height-sm: 24px;
+  --control-height-md: 32px;
+  --control-height-lg: 40px;
+  --touch-target: 44px;
+  --sidebar-width: 236px;
+  --sidebar-width-collapsed: 64px;
+  --topbar-height: 68px;
+
+  /* Shape and depth */
+  --radius-2: 2px;
+  --radius-4: 4px;
+  --radius-6: 6px;
+  --radius-8: 8px;
+  --radius-full: 9999px;
+  --shadow-xs: 0 1px 2px rgb(23 34 31 / 5%);
+  --shadow-sm: 0 4px 12px rgb(23 34 31 / 8%);
+  --shadow-overlay: 0 16px 40px rgb(23 34 31 / 16%);
+  --focus-ring: 0 0 0 3px rgb(23 107 87 / 18%);
+
+  /* Motion */
+  --motion-duration-instant: 80ms;
+  --motion-duration-fast: 140ms;
+  --motion-duration-base: 200ms;
+  --motion-duration-slow: 280ms;
+  --motion-duration-chart: 600ms;
+  --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --motion-ease-enter: cubic-bezier(0, 0, 0.2, 1);
+  --motion-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --motion-distance-sm: 4px;
+  --motion-distance-md: 8px;
+}

@@ -1,0 +1,338 @@
+:root {
+  --el-color-white: var(--color-neutral-0);
+  --el-color-black: var(--color-neutral-900);
+  --el-color-primary: var(--color-brand-600);
+  --el-color-primary-dark-2: var(--color-brand-700);
+  --el-color-primary-light-3: var(--color-brand-400);
+  --el-color-primary-light-5: var(--color-brand-300);
+  --el-color-primary-light-7: var(--color-brand-200);
+  --el-color-primary-light-8: var(--color-brand-100);
+  --el-color-primary-light-9: var(--color-brand-50);
+  --el-color-success: var(--color-success-600);
+  --el-color-success-dark-2: var(--color-success-700);
+  --el-color-success-light-3: var(--color-success-500);
+  --el-color-success-light-5: var(--color-success-300);
+  --el-color-success-light-7: var(--color-success-100);
+  --el-color-success-light-8: var(--color-success-50);
+  --el-color-success-light-9: var(--color-success-50);
+  --el-color-warning: var(--color-warning-600);
+  --el-color-warning-dark-2: var(--color-warning-700);
+  --el-color-warning-light-3: var(--color-warning-500);
+  --el-color-warning-light-5: var(--color-warning-300);
+  --el-color-warning-light-7: var(--color-warning-100);
+  --el-color-warning-light-8: var(--color-warning-50);
+  --el-color-warning-light-9: var(--color-warning-50);
+  --el-color-danger: var(--color-danger-600);
+  --el-color-danger-dark-2: var(--color-danger-700);
+  --el-color-danger-light-3: var(--color-danger-500);
+  --el-color-danger-light-5: var(--color-danger-300);
+  --el-color-danger-light-7: var(--color-danger-100);
+  --el-color-danger-light-8: var(--color-danger-50);
+  --el-color-danger-light-9: var(--color-danger-50);
+  --el-color-error: var(--color-danger-600);
+  --el-color-info: var(--color-info-600);
+  --el-color-info-dark-2: var(--color-info-700);
+  --el-color-info-light-3: var(--color-info-500);
+  --el-color-info-light-5: var(--color-info-300);
+  --el-color-info-light-7: var(--color-info-100);
+  --el-color-info-light-8: var(--color-info-50);
+  --el-color-info-light-9: var(--color-info-50);
+  --el-bg-color: var(--app-surface);
+  --el-bg-color-page: var(--app-bg);
+  --el-bg-color-overlay: var(--app-surface);
+  --el-text-color-primary: var(--app-text);
+  --el-text-color-regular: var(--app-text-regular);
+  --el-text-color-secondary: var(--app-muted);
+  --el-text-color-placeholder: var(--color-neutral-400);
+  --el-text-color-disabled: var(--app-disabled);
+  --el-border-color: var(--app-border);
+  --el-border-color-light: var(--color-neutral-100);
+  --el-border-color-lighter: var(--color-neutral-100);
+  --el-border-color-extra-light: var(--color-neutral-50);
+  --el-border-color-dark: var(--app-border-strong);
+  --el-border-color-darker: var(--color-neutral-400);
+  --el-fill-color: var(--color-neutral-100);
+  --el-fill-color-light: var(--color-neutral-50);
+  --el-fill-color-lighter: var(--color-neutral-25);
+  --el-fill-color-extra-light: var(--color-neutral-25);
+  --el-fill-color-dark: var(--color-neutral-200);
+  --el-fill-color-darker: var(--color-neutral-300);
+  --el-fill-color-blank: var(--app-surface);
+  --el-disabled-bg-color: var(--color-neutral-100);
+  --el-disabled-text-color: var(--app-disabled);
+  --el-disabled-border-color: var(--app-border);
+  --el-overlay-color: rgb(23 34 31 / 72%);
+  --el-overlay-color-light: rgb(23 34 31 / 48%);
+  --el-overlay-color-lighter: rgb(23 34 31 / 28%);
+  --el-mask-color: rgb(255 255 255 / 78%);
+  --el-mask-color-extra-light: rgb(255 255 255 / 48%);
+  --el-font-family: var(--font-family-sans);
+  --el-font-size-base: var(--font-size-14);
+  --el-border-radius-base: var(--radius-6);
+  --el-border-radius-small: var(--radius-4);
+  --el-border-radius-round: 20px;
+  --el-border-radius-circle: 100%;
+  --el-component-size: var(--control-height-md);
+  --el-component-size-large: var(--control-height-lg);
+  --el-component-size-small: var(--control-height-sm);
+  --el-box-shadow: var(--shadow-sm);
+  --el-box-shadow-light: var(--shadow-sm);
+  --el-box-shadow-lighter: var(--shadow-xs);
+  --el-box-shadow-dark: var(--shadow-overlay);
+  --el-transition-duration: var(--motion-duration-base);
+  --el-transition-duration-fast: var(--motion-duration-fast);
+}
+
+.el-button {
+  min-height: var(--control-height-md);
+  border-radius: var(--radius-6);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0;
+  transition:
+    color var(--motion-duration-fast) var(--motion-ease-standard),
+    border-color var(--motion-duration-fast) var(--motion-ease-standard),
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-instant) var(--motion-ease-standard);
+}
+
+.el-button--large {
+  min-height: var(--control-height-lg);
+}
+
+.el-button--small {
+  min-height: var(--control-height-sm);
+}
+
+.el-button:not(.is-disabled):active {
+  transform: translateY(1px);
+}
+
+.el-button:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
+.el-input__wrapper,
+.el-select__wrapper,
+.el-textarea__inner {
+  border-radius: var(--radius-6);
+  transition:
+    box-shadow var(--motion-duration-fast) var(--motion-ease-standard),
+    background-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.el-input__wrapper:hover,
+.el-select__wrapper:hover,
+.el-textarea__inner:hover {
+  box-shadow: 0 0 0 1px var(--app-border-strong) inset;
+}
+
+.el-input__wrapper.is-focus,
+.el-select__wrapper.is-focused,
+.el-textarea__inner:focus {
+  box-shadow: 0 0 0 1px var(--app-accent) inset, var(--focus-ring);
+}
+
+.el-form-item__label {
+  color: var(--app-text-regular);
+  font-weight: var(--font-weight-medium);
+}
+
+.el-form-item__error {
+  font-size: var(--font-size-12);
+}
+
+.el-table {
+  --el-table-border-color: var(--app-border);
+  --el-table-header-bg-color: var(--app-surface-subtle);
+  --el-table-header-text-color: var(--app-text-regular);
+  --el-table-row-hover-bg-color: var(--color-brand-50);
+  --el-table-current-row-bg-color: var(--color-brand-50);
+  --el-table-tr-bg-color: var(--app-surface);
+  border-radius: var(--radius-6);
+  color: var(--app-text-regular);
+  font-size: var(--font-size-13);
+}
+
+.el-table th.el-table__cell {
+  padding: 9px 0;
+  font-weight: var(--font-weight-semibold);
+}
+
+.el-table td.el-table__cell {
+  padding: 10px 0;
+}
+
+.el-table .el-table__inner-wrapper::before {
+  background-color: var(--app-border);
+}
+
+.el-menu {
+  --el-menu-active-color: var(--app-accent);
+  --el-menu-text-color: var(--app-text-regular);
+  --el-menu-hover-text-color: var(--app-text);
+  --el-menu-bg-color: transparent;
+  --el-menu-hover-bg-color: var(--color-brand-50);
+  --el-menu-item-height: var(--touch-target);
+  --el-menu-sub-item-height: var(--touch-target);
+}
+
+.el-menu-item {
+  width: calc(100% - 16px);
+  margin: 2px 8px;
+  border-radius: var(--radius-6);
+}
+
+.el-menu-item.is-active {
+  background: var(--color-brand-50);
+  font-weight: var(--font-weight-medium);
+}
+
+.el-menu--collapse {
+  width: var(--sidebar-width-collapsed);
+}
+
+.el-dialog {
+  overflow: hidden;
+  border: 1px solid var(--app-border);
+  border-radius: var(--radius-8);
+  box-shadow: var(--shadow-overlay);
+}
+
+.el-dialog__header {
+  margin: 0;
+  padding: var(--space-5) var(--space-6) var(--space-4);
+  border-bottom: 1px solid var(--app-border);
+}
+
+.el-dialog__title,
+.el-drawer__title {
+  color: var(--app-text);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-semibold);
+}
+
+.el-dialog__body {
+  padding: var(--space-5) var(--space-6);
+}
+
+.el-dialog__footer {
+  padding: var(--space-4) var(--space-6);
+  border-top: 1px solid var(--app-border);
+  background: var(--app-surface-subtle);
+}
+
+.el-drawer {
+  border-color: var(--app-border);
+  box-shadow: var(--shadow-overlay);
+}
+
+.el-drawer__header {
+  margin: 0;
+  padding: var(--space-5);
+  border-bottom: 1px solid var(--app-border);
+}
+
+.el-drawer__body {
+  padding: var(--space-5);
+}
+
+.el-dropdown__popper,
+.el-select__popper,
+.el-picker__popper {
+  border-radius: var(--radius-6);
+  box-shadow: var(--shadow-sm);
+}
+
+.el-dropdown-menu__item,
+.el-select-dropdown__item {
+  transition:
+    color var(--motion-duration-fast) var(--motion-ease-standard),
+    background-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.el-tag {
+  border-radius: var(--radius-4);
+  font-weight: var(--font-weight-medium);
+}
+
+.el-switch {
+  --el-switch-on-color: var(--app-accent);
+  --el-switch-off-color: var(--color-neutral-300);
+}
+
+.el-pagination {
+  --el-pagination-button-bg-color: transparent;
+  --el-pagination-hover-color: var(--app-accent);
+  color: var(--app-muted);
+}
+
+.el-pagination button,
+.el-pager li {
+  border-radius: var(--radius-4);
+}
+
+.el-alert {
+  border: 1px solid transparent;
+  border-radius: var(--radius-6);
+}
+
+.el-alert--success.is-light {
+  border-color: var(--color-success-100);
+}
+
+.el-alert--warning.is-light {
+  border-color: var(--color-warning-100);
+}
+
+.el-alert--error.is-light {
+  border-color: var(--color-danger-100);
+}
+
+.el-segmented {
+  --el-segmented-bg-color: var(--app-surface-muted);
+  --el-segmented-item-selected-bg-color: var(--app-surface);
+  --el-segmented-item-selected-color: var(--app-text);
+  border-radius: var(--radius-6);
+}
+
+.el-segmented__item-selected {
+  box-shadow: var(--shadow-xs);
+}
+
+.el-tree-node__content {
+  border-radius: var(--radius-4);
+  transition: background-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.el-descriptions__label.el-descriptions__cell.is-bordered-label {
+  background: var(--app-surface-subtle);
+  color: var(--app-muted);
+}
+
+.el-loading-mask {
+  background-color: rgb(255 255 255 / 76%);
+}
+
+.el-loading-spinner .path {
+  stroke: var(--app-accent);
+}
+
+.el-message,
+.el-message-box {
+  border-radius: var(--radius-8);
+  box-shadow: var(--shadow-overlay);
+}
+
+.el-empty__description p {
+  color: var(--app-muted);
+}
+
+@media (max-width: 720px) {
+  .el-dialog__header,
+  .el-dialog__body,
+  .el-dialog__footer {
+    padding-right: var(--space-4);
+    padding-left: var(--space-4);
+  }
+}

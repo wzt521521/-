@@ -5,6 +5,7 @@ spring:
     password:
     driver-class-name: org.h2.Driver
   jpa:
+    defer-datasource-initialization: true
     hibernate:
       ddl-auto: create-drop
     properties:
@@ -12,6 +13,13 @@ spring:
         dialect: org.hibernate.dialect.H2Dialect
   cache:
     type: none
+  redis:
+    repositories:
+      enabled: false
+  sql:
+    init:
+      encoding: UTF-8
+      mode: always
   task:
     scheduling:
       enabled: false
@@ -19,3 +27,15 @@ spring:
 app:
   analytics:
     schedule: "0 0 0 1 1 *"
+
+security:
+  jwt:
+    secret: test-only-secret-key-that-is-longer-than-thirty-two-bytes
+    access-token-ttl: PT2H
+    refresh-token-ttl: P7D
+  cors:
+    allowed-origins: http://localhost:5173,http://127.0.0.1:5173
+
+springdoc:
+  api-docs:
+    enabled: false

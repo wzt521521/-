@@ -520,7 +520,7 @@ INSERT INTO report_template (template_name, template_type, template_file, descri
 -- 管理员账号（初始密码: admin123）
 -- ============================================================
 INSERT INTO sys_user (username, password, real_name, email, status) VALUES
-('admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5Eh', '系统管理员', 'admin@example.com', 1);
+('admin', '$2a$10$R.ly2ozcryr0uP/apBwJBOfWv/eCIE3wwXkr7HCOXTd1Qc4IYfwZu', '系统管理员', 'admin@example.com', 1);
 
 -- admin 分配系统管理员角色
 INSERT INTO sys_user_role (user_id, role_id)
@@ -531,6 +531,21 @@ WHERE u.username = 'admin' AND r.role_code = 'ROLE_ADMIN';
 INSERT INTO sys_role_permission (role_id, permission_id)
 SELECT r.id, p.id FROM sys_role r, sys_permission p
 WHERE r.role_code = 'ROLE_ADMIN';
+
+-- 数据分析员：全校分析、报告、采集、开放 API 和接口文档
+INSERT INTO sys_role_permission (role_id, permission_id)
+SELECT r.id, p.id FROM sys_role r, sys_permission p
+WHERE r.role_code = 'ROLE_ANALYST'
+  AND p.permission_code IN (
+      'dashboard:view', 'position:view', 'report:view',
+      'system:view', 'collect:view', 'collect:toggle',
+      'api:view', 'api:docs');
+
+-- 学院管理员：仅由后端数据范围组件限制到所属学院
+INSERT INTO sys_role_permission (role_id, permission_id)
+SELECT r.id, p.id FROM sys_role r, sys_permission p
+WHERE r.role_code = 'ROLE_COLLEGE_ADMIN'
+  AND p.permission_code IN ('dashboard:view', 'position:view', 'report:view');
 
 -- 学生角色分配基础权限（数据大屏 + 岗位分析 + 岗位推荐）
 INSERT INTO sys_role_permission (role_id, permission_id)
