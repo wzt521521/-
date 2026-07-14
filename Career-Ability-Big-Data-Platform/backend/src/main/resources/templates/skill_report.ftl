@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8" />
 <title>${reportTitle!""}</title>
 <style>
   @page { size: A4; margin: 2cm; }
