@@ -8,7 +8,6 @@ import json
 import hashlib
 from datetime import datetime
 import pandas as pd
-import redis
 from config import (
     REDIS_HOST, REDIS_PORT, REDIS_DB,
     RAW_QUEUE, DEFAULT_CSV_PATH, BATCH_SIZE
@@ -177,6 +176,10 @@ def row_to_json(row, idx, city_map):
 
 
 def main():
+    # Redis is only required when running the importer, not when testing CSV
+    # normalization helpers.
+    import redis
+
     # 1. 确定文件路径
     file_path = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_CSV_PATH
     print(f"[INFO] 数据源: {file_path}")
