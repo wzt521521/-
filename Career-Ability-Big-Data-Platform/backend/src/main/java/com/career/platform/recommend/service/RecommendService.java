@@ -117,7 +117,7 @@ public class RecommendService {
                     + majorScore * MAJOR_WEIGHT;
 
             Set<String> matched = new HashSet<>(studentSkills);
-            matched.retain(new HashSet<>(positionSkills));
+            matched.retainAll(new HashSet<>(positionSkills));
             Set<String> unmatched = new HashSet<>(positionSkills);
             unmatched.removeAll(new HashSet<>(studentSkills));
 
@@ -160,7 +160,7 @@ public class RecommendService {
         List<String> preferredCities = parseCities(profile.getPreferredCity());
 
         Set<String> matched = new HashSet<>(studentSkills);
-        matched.retain(new HashSet<>(positionSkills));
+        matched.retainAll(new HashSet<>(positionSkills));
         Set<String> missing = new HashSet<>(positionSkills);
         missing.removeAll(new HashSet<>(studentSkills));
         Set<String> extra = new HashSet<>(studentSkills);
@@ -275,7 +275,7 @@ public class RecommendService {
 
     // ---- 辅助方法 ----
 
-    private List<String> normalizeSkills(List<String> skills) {
+    List<String> normalizeSkills(List<String> skills) {
         if (skills == null) return List.of();
         return skills.stream()
                 .filter(Objects::nonNull)
