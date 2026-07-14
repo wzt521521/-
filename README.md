@@ -10,6 +10,48 @@
 
 > 严格遵循上述 Git 协作流程，养成良好的团队开发习惯。
 
+## R1 本机质量门禁
+
+实际运行工程位于 `Career-Ability-Big-Data-Platform/`。在提交前从该目录依次执行：
+
+```powershell
+cd Career-Ability-Big-Data-Platform/backend
+.\mvnw.cmd -B clean verify
+
+cd ../frontend
+npm ci
+npm run test:coverage
+npm run lint
+npm run build
+
+cd ../data-pipeline
+py -3.10 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install --upgrade pip
+.\.venv\Scripts\python.exe -m pip install -r requirements-test.txt
+.\.venv\Scripts\python.exe -m pytest
+.\.venv\Scripts\python.exe scripts/check_coverage.py coverage.xml
+
+cd ..
+docker compose config --quiet
+```
+
+`pytest` 默认只运行无外部副作用的单元测试。MySQL 8 和 Redis 7 集成测试仅在专用测试库、临时 Redis key 和显式环境变量齐备时运行：
+
+```powershell
+$env:PIPELINE_TEST_MYSQL_DATABASE = "career_ability_pipeline_test"
+$env:MYSQL_HOST = "127.0.0.1"
+$env:MYSQL_PORT = "3306"
+$env:MYSQL_USER = "<dedicated-test-user-with-create-database>"
+$env:MYSQL_PASSWORD = "<dedicated-test-password>"
+$env:REDIS_HOST = "127.0.0.1"
+$env:REDIS_PORT = "6379"
+$env:REDIS_DB = "15"
+cd Career-Ability-Big-Data-Platform/data-pipeline
+.\.venv\Scripts\python.exe -m pytest -m integration
+```
+
+提交前还必须执行 `git diff --check`，确认 `git status --short` 只包含本次任务文件，并通过 PR 合并；不得绕过受保护分支。
+
 # 职业能力大数据服务平台
 
 ---

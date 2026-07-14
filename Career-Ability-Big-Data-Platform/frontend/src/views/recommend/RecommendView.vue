@@ -284,6 +284,7 @@ onMounted(async () => {
         <div
           v-else-if="recommendLoading"
           v-loading="recommendLoading"
+          class="recommend-list-loading"
           style="min-height: 300px"
         />
 

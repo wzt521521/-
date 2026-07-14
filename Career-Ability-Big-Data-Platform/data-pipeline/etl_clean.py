@@ -12,9 +12,6 @@ import sys
 import time
 from datetime import datetime
 
-import pymysql
-import redis
-
 from config import (
     REDIS_HOST, REDIS_PORT, REDIS_DB,
     RAW_QUEUE, CLEANED_QUEUE,
@@ -375,6 +372,11 @@ def print_stats():
 
 def main():
     global stats
+
+    # Client libraries are needed only by the long-running worker. Keeping
+    # them out of module import allows transformation tests to stay offline.
+    import pymysql
+    import redis
 
     print("[INFO] ETL 清洗脚本启动")
     print(f"      消费队列: {RAW_QUEUE}")
