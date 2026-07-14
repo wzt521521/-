@@ -20,6 +20,8 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class RecommendService {
 
+    private static final int MAX_RECOMMENDATIONS = 20;
+
     private static final Map<String, Integer> EDUCATION_LEVEL = Map.of(
             "博士", 5, "硕士", 4, "本科", 3, "大专", 2, "不限", 1
     );
@@ -51,12 +53,7 @@ public class RecommendService {
      * </p>
      */
     public List<RecommendationResponse> recommend(Long userId, int page, int size) {
-        // 尝试从缓存获取完整推荐列表
-        List<RecommendationResponse> all = getCachedResult(userId);
-        if (all == null) {
-            all = computeAll(userId);
-            putCachedResult(userId, all);
-        }
+        List<RecommendationResponse> all = getOrComputeRecommendations(userId);
 
         // 内存分页
         int from = (page - 1) * size;
@@ -65,6 +62,17 @@ public class RecommendService {
             return List.of();
         }
         return all.subList(from, to);
+    }
+
+    private List<RecommendationResponse> getOrComputeRecommendations(Long userId) {
+        List<RecommendationResponse> all = getCachedResult(userId);
+        if (all == null) {
+            all = computeAll(userId);
+            putCachedResult(userId, all);
+        }
+        return all.size() <= MAX_RECOMMENDATIONS
+                ? all
+                : all.subList(0, MAX_RECOMMENDATIONS);
     }
 
     private List<RecommendationResponse> getCachedResult(Long userId) {
@@ -133,16 +141,16 @@ public class RecommendService {
         }
 
         results.sort(Comparator.comparingDouble(RecommendationResponse::getScore).reversed());
-        return results;
+        return results.stream()
+                .limit(MAX_RECOMMENDATIONS)
+                .collect(Collectors.toList());
     }
 
     /**
      * 获取推荐结果总数。
      */
     public long count(Long userId) {
-        profileRepository.findByUserId(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.BAD_REQUEST, "请先创建就业画像"));
-        return positionRepository.count();
+        return getOrComputeRecommendations(userId).size();
     }
 
     /**
