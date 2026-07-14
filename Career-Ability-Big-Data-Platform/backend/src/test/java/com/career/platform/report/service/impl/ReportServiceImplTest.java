@@ -8,11 +8,15 @@ import com.career.platform.report.entity.ReportRecord;
 import com.career.platform.report.entity.ReportTemplate;
 import com.career.platform.report.repository.ReportRecordRepository;
 import com.career.platform.report.repository.ReportTemplateRepository;
-import com.career.platform.report.service.AsyncReportGenerator;
+import com.career.platform.report.service.ReportGenerationRequestedEvent;
+import com.career.platform.report.service.ReportSnapshotMapper;
+import com.career.platform.report.service.ReportStorage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.core.io.Resource;
+import org.springframework.context.ApplicationEventPublisher;
+import org.mockito.ArgumentCaptor;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -24,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -34,19 +38,23 @@ class ReportServiceImplTest {
 
     private ReportTemplateRepository templateRepository;
     private ReportRecordRepository recordRepository;
-    private AsyncReportGenerator asyncReportGenerator;
+    private ApplicationEventPublisher eventPublisher;
+    private ReportSnapshotMapper snapshotMapper;
+    private ReportStorage reportStorage;
     private ReportServiceImpl service;
 
     @BeforeEach
     void setUp() {
         templateRepository = mock(ReportTemplateRepository.class);
         recordRepository = mock(ReportRecordRepository.class);
-        asyncReportGenerator = mock(AsyncReportGenerator.class);
-        service = new ReportServiceImpl(templateRepository, recordRepository, asyncReportGenerator);
+        eventPublisher = mock(ApplicationEventPublisher.class);
+        snapshotMapper = mock(ReportSnapshotMapper.class);
+        reportStorage = mock(ReportStorage.class);
+        service = new ReportServiceImpl(templateRepository, recordRepository, eventPublisher, snapshotMapper, reportStorage);
     }
 
     @Test
-    void createsPendingRecordAndStartsAsyncGeneration() {
+    void createsPendingRecordAndPublishesGenerationOnlyAfterPersistence() {
         ReportTemplate template = template(7L, "monthly.ftl");
         GenerateReportRequest request = request(7L, "monthly report");
         when(templateRepository.findById(7L)).thenReturn(Optional.of(template));
@@ -61,8 +69,10 @@ class ReportServiceImplTest {
         assertEquals(99L, response.getId());
         assertEquals("PENDING", response.getStatus());
         assertEquals("monthly report", response.getReportTitle());
-        verify(asyncReportGenerator).generate(eq(99L), eq("monthly.ftl"), eq("monthly report"),
-                eq(request.getTimeRangeStart()), eq(request.getTimeRangeEnd()));
+        ArgumentCaptor<Object> eventCaptor = ArgumentCaptor.forClass(Object.class);
+        verify(eventPublisher).publishEvent(eventCaptor.capture());
+        assertTrue(eventCaptor.getValue() instanceof ReportGenerationRequestedEvent);
+        assertEquals(99L, ((ReportGenerationRequestedEvent) eventCaptor.getValue()).getReportId());
     }
 
     @Test
@@ -85,6 +95,7 @@ class ReportServiceImplTest {
         ReportRecord completed = record(99L, 41L, "COMPLETED");
         completed.setFilePath(reportFile.toString());
         when(recordRepository.findByIdAndUserId(99L, 41L)).thenReturn(Optional.of(completed));
+        when(reportStorage.resolveExisting(reportFile.toString())).thenReturn(reportFile);
 
         Resource resource = service.download(41L, 99L);
 

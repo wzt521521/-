@@ -10,12 +10,14 @@ vi.mock('../utils/request', () => ({ default: client }))
 
 import {
   deleteReport,
+  downloadReportFile,
   generateReport,
   getReportDownloadUrl,
   getReportPreviewUrl,
   getReportStatus,
   getReportTemplates,
   getReports,
+  previewReportFile,
 } from './report'
 
 describe('report API', () => {
@@ -44,5 +46,19 @@ describe('report API', () => {
   it('builds browser URLs with the API prefix for binary report actions', () => {
     expect(getReportDownloadUrl(9)).toBe('/api/reports/9/download')
     expect(getReportPreviewUrl(9)).toBe('/api/reports/9/preview')
+  })
+
+  it('requests report binaries through the authenticated client instead of window URLs', () => {
+    downloadReportFile(9)
+    previewReportFile(9)
+
+    expect(client.get).toHaveBeenCalledWith('/reports/9/download', {
+      responseType: 'blob',
+      suppressErrorMessage: true,
+    })
+    expect(client.get).toHaveBeenCalledWith('/reports/9/preview', {
+      responseType: 'blob',
+      suppressErrorMessage: true,
+    })
   })
 })

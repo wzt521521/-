@@ -1,0 +1,75 @@
+package com.career.platform.report.service;
+
+import com.sun.net.httpserver.HttpServer;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicBoolean;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+class PdfReportRendererTest {
+
+    @Test
+    void rendersExtractablePdfTextAndAtLeastOnePage(@TempDir Path temporaryDirectory) throws Exception {
+        PdfReportRenderer renderer = new PdfReportRenderer(temporaryDirectory.resolve("missing.ttf").toString(), false);
+        byte[] pdf = renderer.render("<html><body><h1>Monthly employment report</h1><p>Jobs: 12</p></body></html>");
+
+        try (PDDocument document = PDDocument.load(pdf)) {
+            assertTrue(document.getNumberOfPages() >= 1);
+            assertTrue(new PDFTextStripper().getText(document).contains("Monthly employment report"));
+        }
+    }
+
+    @Test
+    void rejectsProductionRenderingWithoutTheConfiguredChineseFont(@TempDir Path temporaryDirectory) {
+        PdfReportRenderer renderer = new PdfReportRenderer(temporaryDirectory.resolve("missing.ttf").toString(), true);
+
+        assertThrows(IOException.class, () -> renderer.render("<html><body>test</body></html>"));
+    }
+
+    @Test
+    void rejectsHttpAndFileExternalResources(@TempDir Path temporaryDirectory) throws Exception {
+        Path fileStyle = Files.writeString(temporaryDirectory.resolve("external.css"),
+                ".from-file { display: none; }");
+        AtomicBoolean httpRequested = new AtomicBoolean();
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/external.css", exchange -> {
+            httpRequested.set(true);
+            byte[] body = ".from-http { display: none; }".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            exchange.sendResponseHeaders(200, body.length);
+            exchange.getResponseBody().write(body);
+            exchange.close();
+        });
+        server.start();
+
+        try {
+            String html = "<html><head>"
+                    + "<link rel=\"stylesheet\" href=\"" + fileStyle.toUri() + "\" />"
+                    + "<link rel=\"stylesheet\" href=\"http://127.0.0.1:" + server.getAddress().getPort()
+                    + "/external.css\" />"
+                    + "</head><body><p class=\"from-file\">file resource blocked</p>"
+                    + "<p class=\"from-http\">http resource blocked</p></body></html>";
+            PdfReportRenderer renderer = new PdfReportRenderer(temporaryDirectory.resolve("missing.ttf").toString(), false);
+
+            byte[] pdf = renderer.render(html);
+
+            try (PDDocument document = PDDocument.load(pdf)) {
+                String text = new PDFTextStripper().getText(document);
+                assertTrue(text.contains("file resource blocked"));
+                assertTrue(text.contains("http resource blocked"));
+            }
+            assertFalse(httpRequested.get());
+        } finally {
+            server.stop(0);
+        }
+    }
+}

@@ -171,6 +171,15 @@ jobs:
           MYSQL_DATABASE: career_ability_test
           PIPELINE_TEST_MYSQL_DATABASE: career_ability_pipeline_test
         run: python -m pytest -m integration
+      - name: Verify MySQL 8 analytics query plan and P95
+        env:
+          MYSQL_HOST: 127.0.0.1
+          MYSQL_PORT: '3306'
+          MYSQL_USER: root
+          MYSQL_PASSWORD: root_test_password
+          MYSQL_DATABASE: career_ability_test
+          ANALYTICS_SEARCH_P95_SECONDS: '1.0'
+        run: python scripts/verify_analytics_mysql_performance.py
       - name: Upload integration test reports and coverage
         if: always()
         uses: actions/upload-artifact@v4
@@ -187,6 +196,8 @@ jobs:
     env:
       JWT_SECRET: ci-only-non-production-secret-that-is-long-enough
       MYSQL_ROOT_PASSWORD: ci-local-mysql-password
+      INITIAL_ADMIN_USERNAME: ciadmin
+      INITIAL_ADMIN_PASSWORD: ci-bootstrap-${{ github.run_id }}-not-for-production
     steps:
       - uses: actions/checkout@v4
       - name: Validate Compose configuration
@@ -200,6 +211,13 @@ jobs:
           docker compose -f Career-Ability-Big-Data-Platform/docker-compose.yml
           exec -T python-etl python scripts/verify_compose_pipeline.py
           --csv /data/kaggle_jobs_500.csv --timeout-seconds 180
+      - name: Install PDF text verification tool
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends poppler-utils
+      - name: Verify report persistence and Chinese font availability
+        run: >-
+          python Career-Ability-Big-Data-Platform/scripts/verify_compose_reports.py
+          --compose-file Career-Ability-Big-Data-Platform/docker-compose.yml
+          --timeout-seconds 180
       - name: Capture Compose diagnostics
         if: always()
         run: >-

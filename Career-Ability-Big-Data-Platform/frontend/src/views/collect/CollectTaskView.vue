@@ -162,7 +162,7 @@ onBeforeUnmount(() => taskChart?.dispose())
       <div class="toolbar-right">
         <span class="refresh-note" v-if="statsRefreshedAt">更新于 {{ statsRefreshedAt.toLocaleTimeString('zh-CN', { hour12: false }) }}</span>
         <el-button :icon="Refresh" :loading="loading" title="刷新" circle @click="load" />
-        <el-button type="primary" :icon="Plus" @click="openCreate">新增任务</el-button>
+        <el-button v-permission="'collect:toggle'" type="primary" :icon="Plus" @click="openCreate">新增任务</el-button>
       </div>
     </div>
 
@@ -196,11 +196,11 @@ onBeforeUnmount(() => taskChart?.dispose())
           <el-table-column prop="lastRunTime" label="上次执行" width="170" />
           <el-table-column label="操作" width="220" fixed="right">
             <template #default="{ row }">
-              <el-button type="success" link size="small" :icon="row.status === 'RUNNING' ? VideoPause : VideoPlay" @click="toggleStatus(row)">
+              <el-button v-permission="'collect:toggle'" type="success" link size="small" :icon="row.status === 'RUNNING' ? VideoPause : VideoPlay" @click="toggleStatus(row)">
                 {{ row.status === 'RUNNING' ? '暂停' : row.status === 'PAUSED' ? '恢复' : '启动' }}
               </el-button>
-              <el-button type="primary" link :icon="Edit" size="small" @click="openEdit(row)">编辑</el-button>
-              <el-button type="danger" link :icon="Delete" size="small" @click="handleDelete(row)">删除</el-button>
+              <el-button v-permission="'collect:toggle'" type="primary" link :icon="Edit" size="small" @click="openEdit(row)">编辑</el-button>
+              <el-button v-permission="'collect:toggle'" type="danger" link :icon="Delete" size="small" @click="handleDelete(row)">删除</el-button>
             </template>
           </el-table-column>
         </el-table>

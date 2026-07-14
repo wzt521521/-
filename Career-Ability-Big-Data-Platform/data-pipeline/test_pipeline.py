@@ -211,6 +211,7 @@ class MemoryRedis:
     def __init__(self):
         self.lists = {}
         self.sets = {}
+        self.values = {}
 
     def lpush(self, key, *values):
         queue = self.lists.setdefault(key, [])
@@ -253,6 +254,10 @@ class MemoryRedis:
         members.add(member)
         self.lpush(queue_key, payload)
         return 1
+
+    def incr(self, key):
+        self.values[key] = int(self.values.get(key, 0)) + 1
+        return self.values[key]
 
 
 class MemoryDatabase:
@@ -371,6 +376,7 @@ def test_processing_batch_is_idempotent_isolates_errors_and_recovers_messages(tm
     assert (stats.success, stats.error, stats.null_discard, stats.cleaned) == (2, 1, 1, 2)
     assert len(database.positions) == 2
     assert database.commits == 1
+    assert redis_client.values["career:position-data-version"] == 1
     assert redis_client.llen(keys.processing) == 0
     assert redis_client.llen(keys.failed) == 2
     assert redis_client.llen(keys.cleaned) == 2
@@ -393,6 +399,7 @@ def test_processing_batch_is_idempotent_isolates_errors_and_recovers_messages(tm
     assert replay.duplicate == 1
     assert len(database.positions) == 2
     assert redis_client.llen(keys.cleaned) == 2
+    assert redis_client.values["career:position-data-version"] == 2
 
     redis_client.lpush(keys.raw, json.dumps(valid_two))
     assert len(claim_batch(redis_client, keys.raw, keys.processing, timeout=0)) == 1

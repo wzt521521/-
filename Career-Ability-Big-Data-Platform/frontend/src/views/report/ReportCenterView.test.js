@@ -5,17 +5,21 @@ import ReportCenterView from './ReportCenterView.vue'
 
 const reportApi = vi.hoisted(() => ({
   deleteReport: vi.fn(),
+  downloadReportFile: vi.fn(),
   generateReport: vi.fn(),
-  getReportDownloadUrl: vi.fn(),
-  getReportPreviewUrl: vi.fn(),
   getReportStatus: vi.fn(),
   getReportTemplates: vi.fn(),
   getReports: vi.fn(),
+  previewReportFile: vi.fn(),
+  readReportBinaryError: vi.fn(),
 }))
 const message = vi.hoisted(() => ({
   error: vi.fn(),
   success: vi.fn(),
   warning: vi.fn(),
+}))
+const userStore = vi.hoisted(() => ({
+  hasPermission: vi.fn(() => true),
 }))
 
 vi.mock('element-plus', () => ({
@@ -23,6 +27,7 @@ vi.mock('element-plus', () => ({
   ElMessageBox: { confirm: vi.fn() },
 }))
 vi.mock('../../api/report', () => reportApi)
+vi.mock('../../stores/user', () => ({ useUserStore: () => userStore }))
 
 const tableRowsKey = Symbol('tableRows')
 
@@ -110,6 +115,8 @@ beforeEach(() => {
   vi.clearAllMocks()
   reportApi.getReportTemplates.mockResolvedValue({ data: [] })
   reportApi.getReports.mockResolvedValue(page())
+  reportApi.readReportBinaryError.mockResolvedValue('报告文件请求失败')
+  userStore.hasPermission.mockReturnValue(true)
 })
 
 afterEach(() => {
@@ -197,5 +204,44 @@ describe('ReportCenterView', () => {
 
     await vi.advanceTimersByTimeAsync(4000)
     expect(reportApi.getReportStatus).toHaveBeenCalledTimes(1)
+  })
+
+  it('cleans polling timers when the component unmounts', async () => {
+    reportApi.getReports.mockResolvedValueOnce(page([generatingReport()]))
+    const wrapper = mountView()
+    await flushPromises()
+    vi.useFakeTimers()
+
+    const refreshButton = wrapper.findAll('button').find((button) => button.text() === '刷新')
+    await refreshButton.trigger('click')
+    wrapper.unmount()
+    await vi.advanceTimersByTimeAsync(4000)
+
+    expect(reportApi.getReportStatus).not.toHaveBeenCalled()
+  })
+
+  it('shows a parsed binary download error instead of navigating to an unauthenticated URL', async () => {
+    reportApi.getReports.mockResolvedValueOnce(page([{ ...generatingReport(), status: 'COMPLETED' }]))
+    reportApi.downloadReportFile.mockRejectedValue(new Error('binary failure'))
+    reportApi.readReportBinaryError.mockResolvedValue('没有下载权限')
+    const wrapper = mountView()
+    await flushPromises()
+
+    const downloadButton = wrapper.findAll('button').find((button) => button.text() === '下载')
+    await downloadButton.trigger('click')
+    await flushPromises()
+
+    expect(reportApi.downloadReportFile).toHaveBeenCalledWith(7)
+    expect(message.error).toHaveBeenCalledWith('没有下载权限')
+  })
+
+  it('hides mutating controls when the current user lacks report permissions', async () => {
+    userStore.hasPermission.mockReturnValue(false)
+    reportApi.getReports.mockResolvedValueOnce(page([{ ...generatingReport(), status: 'COMPLETED' }]))
+    const wrapper = mountView()
+    await flushPromises()
+
+    expect(wrapper.findAll('button').map((button) => button.text())).not.toContain('生成新报告')
+    expect(wrapper.findAll('button').map((button) => button.text())).not.toContain('删除')
   })
 })

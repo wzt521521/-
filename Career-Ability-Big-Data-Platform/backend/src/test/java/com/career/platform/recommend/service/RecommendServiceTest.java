@@ -1,10 +1,12 @@
 package com.career.platform.recommend.service;
 
+import com.career.platform.common.error.BusinessException;
 import com.career.platform.position.entity.JobPosition;
 import com.career.platform.position.repository.PositionRepository;
 import com.career.platform.profile.entity.StudentProfile;
 import com.career.platform.profile.repository.ProfileRepository;
 import com.career.platform.recommend.dto.RecommendationResponse;
+import com.career.platform.recommend.dto.RecommendationCacheEntry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.cache.CacheManager;
@@ -17,7 +19,9 @@ import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -68,9 +72,10 @@ class RecommendServiceTest {
     @Test
     void calculatesCityEducationSalaryAndMajorScores() {
         assertEquals(1.0, service.calcCityScore(List.of("Shanghai"), "Shanghai City"));
-        assertEquals(0.0, service.calcCityScore(List.of("Shanghai"), "Beijing"));
+        assertEquals(0.3, service.calcCityScore(List.of("Shanghai"), "Beijing"));
 
-        assertEquals(0.75, service.calcEducationScore("\u672c\u79d1", "\u7855\u58eb"));
+        assertEquals(0.4, service.calcEducationScore("\u672c\u79d1", "\u7855\u58eb"));
+        assertEquals(0.8, service.calcEducationScore("\u7855\u58eb", "\u672c\u79d1"));
         assertEquals(1.0, service.calcEducationScore("\u5927\u4e13", "\u4e0d\u9650"));
 
         assertEquals(0.5, service.calcSalaryScore(10, 20, 15, 25));
@@ -84,18 +89,18 @@ class RecommendServiceTest {
     void cachesAndLimitsRecommendationsToTopTwenty() {
         StudentProfile profile = profile(1L);
         when(profileRepository.findByUserId(1L)).thenReturn(Optional.of(profile));
-        when(positionRepository.findAllWithCompany()).thenReturn(
+        when(positionRepository.findLatest(any())).thenReturn(
                 IntStream.rangeClosed(1, 25)
                         .mapToObj(this::position)
                         .collect(java.util.stream.Collectors.toList()));
 
-        List<?> firstPage = service.recommend(1L, 1, 100);
+        List<?> firstPage = service.recommend(1L, 1, 20);
 
         assertEquals(20, firstPage.size());
         assertEquals(20, service.count(1L));
         assertTrue(service.recommend(1L, 2, 20).isEmpty());
 
-        verify(positionRepository, times(1)).findAllWithCompany();
+        verify(positionRepository, times(1)).findLatest(any());
         verify(positionRepository, never()).count();
     }
 
@@ -104,11 +109,18 @@ class RecommendServiceTest {
         List<RecommendationResponse> staleResults = IntStream.range(0, 25)
                 .mapToObj(ignored -> mock(RecommendationResponse.class))
                 .collect(java.util.stream.Collectors.toList());
-        cacheManager.getCache("recommend").put(1L, staleResults);
+        cacheManager.getCache("recommend").put("local:1", new RecommendationCacheEntry(staleResults));
 
-        assertEquals(20, service.recommend(1L, 1, 100).size());
+        assertEquals(20, service.recommend(1L, 1, 20).size());
         assertEquals(20, service.count(1L));
         verifyNoInteractions(profileRepository, positionRepository);
+    }
+
+    @Test
+    void rejectsRecommendationPaginationOutsideTheTopTwentyContract() {
+        assertThrows(BusinessException.class, () -> service.recommend(1L, 0, 20));
+        assertThrows(BusinessException.class, () -> service.recommend(1L, 1, 0));
+        assertThrows(BusinessException.class, () -> service.recommend(1L, 1, 21));
     }
 
     private CacheManager cacheManager() {

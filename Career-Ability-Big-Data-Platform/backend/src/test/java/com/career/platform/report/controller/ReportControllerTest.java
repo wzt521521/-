@@ -77,18 +77,18 @@ class ReportControllerTest {
 
     @Test
     void protectsEveryReportEndpointWithReportViewPermission() throws Exception {
-        assertPermission(ReportController.class.getMethod("getTemplates"));
-        assertPermission(ReportController.class.getMethod("generate", GenerateReportRequest.class));
-        assertPermission(ReportController.class.getMethod("list", String.class, String.class, int.class, int.class));
-        assertPermission(ReportController.class.getMethod("status", Long.class));
-        assertPermission(ReportController.class.getMethod("download", Long.class));
-        assertPermission(ReportController.class.getMethod("preview", Long.class));
-        assertPermission(ReportController.class.getMethod("delete", Long.class));
+        assertPermission(ReportController.class.getMethod("getTemplates"), "report:view");
+        assertPermission(ReportController.class.getMethod("generate", GenerateReportRequest.class), "report:generate");
+        assertPermission(ReportController.class.getMethod("list", String.class, String.class, int.class, int.class), "report:view");
+        assertPermission(ReportController.class.getMethod("status", Long.class), "report:view");
+        assertPermission(ReportController.class.getMethod("download", Long.class), "report:view");
+        assertPermission(ReportController.class.getMethod("preview", Long.class), "report:view");
+        assertPermission(ReportController.class.getMethod("delete", Long.class), "report:delete");
     }
 
-    private void assertPermission(Method method) {
+    private void assertPermission(Method method, String permission) {
         PreAuthorize preAuthorize = method.getAnnotation(PreAuthorize.class);
         assertNotNull(preAuthorize);
-        assertEquals("hasAuthority('report:view')", preAuthorize.value());
+        assertEquals("hasAuthority('" + permission + "')", preAuthorize.value());
     }
 }
