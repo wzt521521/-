@@ -251,6 +251,7 @@ onUnmounted(() => {
     <div
       v-if="loading"
       v-loading="loading"
+      class="report-list-loading"
       style="min-height: 300px"
     />
 
