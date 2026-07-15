@@ -23,7 +23,9 @@ services:
     networks:
       - job-data-net
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot --password=\"$${MYSQL_ROOT_PASSWORD}\" --silent"]
+      # Use TCP instead of localhost's Unix socket so the temporary init server
+      # cannot mark the service healthy before init.sql has completed.
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -P 3306 -uroot --password=\"$${MYSQL_ROOT_PASSWORD}\" --silent"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -89,6 +91,7 @@ services:
       MYSQL_MIGRATOR_USER: ${MYSQL_MIGRATOR_USER:-career_migrator}
       MYSQL_MIGRATOR_PASSWORD: ${MYSQL_MIGRATOR_PASSWORD:?MYSQL_MIGRATOR_PASSWORD must be set}
       MIGRATION_LOCK_TIMEOUT_SECONDS: ${MIGRATION_LOCK_TIMEOUT_SECONDS:-60}
+      MYSQL_CONNECT_TIMEOUT_SECONDS: ${MYSQL_CONNECT_TIMEOUT_SECONDS:-180}
       MIGRATIONS_DIR: /sql/migrations
       TZ: Asia/Shanghai
     depends_on:

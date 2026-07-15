@@ -1,0 +1,18 @@
+# Release v1.0 risk acceptances for dependency-only Trivy findings.
+# The application does not enable Cloud Foundry actuator endpoints; health/metrics
+# remain the only Compose-exposed actuator surfaces and the backend is bound to loopback.
+CVE-2026-22733
+
+# Spring Security 5.7.x is pinned to the latest public 5.7 patch for the Boot 2.7
+# line. The Trivy DB lists only future 6.5.9/7.0.4 fixes, which are not available
+# on Maven Central for this release baseline.
+CVE-2026-22732
+
+# This codebase does not expose HttpInvokerServiceExporter or Java deserialization
+# remoting endpoints.
+CVE-2016-1000027
+
+# The backend does not use functional RouterFunctions with FileSystemResource.
+# Static frontend assets are served by nginx, not Spring MVC.
+CVE-2024-38816
+CVE-2024-38819

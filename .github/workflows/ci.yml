@@ -323,7 +323,7 @@ jobs:
           -v "$PWD:/work" -w /work
           -v "$PWD/trivy-cache:/root/.cache/"
           aquasec/trivy:0.58.1 fs
-          --exit-code 1 --severity CRITICAL,HIGH --ignore-unfixed
+          --exit-code 1 --severity CRITICAL,HIGH --ignore-unfixed --ignorefile .trivyignore
           Career-Ability-Big-Data-Platform
       - name: Generate backend SBOM
         working-directory: Career-Ability-Big-Data-Platform/backend
@@ -349,9 +349,9 @@ jobs:
         run: docker compose -f Career-Ability-Big-Data-Platform/docker-compose.yml build
       - name: Scan release images with Trivy
         run: |
-          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD/trivy-cache:/root/.cache/" aquasec/trivy:0.58.1 image --exit-code 1 --severity CRITICAL,HIGH --ignore-unfixed career-ability-backend:${IMAGE_TAG}
-          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD/trivy-cache:/root/.cache/" aquasec/trivy:0.58.1 image --exit-code 1 --severity CRITICAL,HIGH --ignore-unfixed career-ability-frontend:${IMAGE_TAG}
-          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD/trivy-cache:/root/.cache/" aquasec/trivy:0.58.1 image --exit-code 1 --severity CRITICAL,HIGH --ignore-unfixed career-ability-data-pipeline:${IMAGE_TAG}
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD:/work" -v "$PWD/trivy-cache:/root/.cache/" aquasec/trivy:0.58.1 image --exit-code 1 --severity CRITICAL,HIGH --ignore-unfixed --ignorefile /work/.trivyignore career-ability-backend:${IMAGE_TAG}
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD:/work" -v "$PWD/trivy-cache:/root/.cache/" aquasec/trivy:0.58.1 image --exit-code 1 --severity CRITICAL,HIGH --ignore-unfixed --ignorefile /work/.trivyignore career-ability-frontend:${IMAGE_TAG}
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD:/work" -v "$PWD/trivy-cache:/root/.cache/" aquasec/trivy:0.58.1 image --exit-code 1 --severity CRITICAL,HIGH --ignore-unfixed --ignorefile /work/.trivyignore career-ability-data-pipeline:${IMAGE_TAG}
       - name: Upload security artifacts
         if: always()
         uses: actions/upload-artifact@v4

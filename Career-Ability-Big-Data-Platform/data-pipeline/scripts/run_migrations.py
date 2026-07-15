@@ -30,6 +30,7 @@ class Settings:
     migrator_password: str
     migrations_dir: Path
     lock_timeout_seconds: int
+    connect_timeout_seconds: int
 
 
 def parse_args() -> Settings:
@@ -48,6 +49,11 @@ def parse_args() -> Settings:
         type=int,
         default=int(os.getenv("MIGRATION_LOCK_TIMEOUT_SECONDS", "60")),
     )
+    parser.add_argument(
+        "--connect-timeout-seconds",
+        type=int,
+        default=int(os.getenv("MYSQL_CONNECT_TIMEOUT_SECONDS", "120")),
+    )
     args = parser.parse_args()
     settings = Settings(
         host=args.host,
@@ -60,6 +66,7 @@ def parse_args() -> Settings:
         migrator_password=args.migrator_password,
         migrations_dir=args.migrations_dir,
         lock_timeout_seconds=args.lock_timeout_seconds,
+        connect_timeout_seconds=args.connect_timeout_seconds,
     )
     validate(settings)
     return settings
@@ -96,6 +103,7 @@ def root_connection(settings: Settings) -> pymysql.connections.Connection:
         user="root",
         password=settings.root_password,
         charset="utf8mb4",
+        connect_timeout=5,
         autocommit=True,
     )
 
@@ -108,13 +116,32 @@ def migrator_connection(settings: Settings) -> pymysql.connections.Connection:
         password=settings.migrator_password,
         database=settings.database,
         charset="utf8mb4",
+        connect_timeout=5,
         autocommit=False,
     )
 
 
+def retry_connection(settings: Settings, label: str, factory) -> pymysql.connections.Connection:
+    deadline = time.monotonic() + settings.connect_timeout_seconds
+    last_error: Exception | None = None
+    while time.monotonic() <= deadline:
+        try:
+            return factory(settings)
+        except pymysql.err.OperationalError as error:
+            last_error = error
+            error_code = error.args[0] if error.args else None
+            if error_code not in (2003, 2006, 2013):
+                raise
+            time.sleep(2)
+    raise RuntimeError(
+        f"timed out waiting for MySQL {label} connection after "
+        f"{settings.connect_timeout_seconds}s"
+    ) from last_error
+
+
 def provision_database(settings: Settings) -> None:
     database = quote_identifier(settings.database)
-    with root_connection(settings) as connection:
+    with retry_connection(settings, "root", root_connection) as connection:
         with connection.cursor() as cursor:
             cursor.execute(
                 f"CREATE DATABASE IF NOT EXISTS {database} "
@@ -214,7 +241,7 @@ def apply_migrations(settings: Settings) -> dict[str, object]:
     provision_database(settings)
     applied: list[str] = []
     skipped: list[str] = []
-    with migrator_connection(settings) as connection:
+    with retry_connection(settings, "migrator", migrator_connection) as connection:
         lock_name = f"{settings.database}:schema_migrations"
         with connection.cursor() as cursor:
             cursor.execute("SELECT GET_LOCK(%s, %s)", (lock_name, settings.lock_timeout_seconds))
