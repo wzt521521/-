@@ -6,6 +6,10 @@ are tagged only after the release acceptance process succeeds.
 
 ## [Unreleased]
 
+No unreleased changes.
+
+## [1.0.0] - 2026-07-15
+
 ### Added
 
 - Five-service release topology: MySQL, Redis, Spring Boot backend, Vue/Nginx
@@ -58,3 +62,4 @@ are tagged only after the release acceptance process succeeds.
   belong to the corresponding GitHub Release.
 
 [Unreleased]: https://github.com/wzt521521/Career-Ability-Big-Data-Platform/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/wzt521521/Career-Ability-Big-Data-Platform/releases/tag/v1.0.0
