@@ -5,9 +5,10 @@ RUN mvn -q -DskipTests dependency:go-offline
 COPY src src
 RUN mvn -q -DskipTests package
 
-FROM eclipse-temurin:17.0.13_11-jre-alpine-3.20
+FROM eclipse-temurin:17.0.16_8-jre-alpine-3.22
 WORKDIR /app
-RUN apk add --no-cache wget fontconfig \
+RUN apk upgrade --no-cache \
+    && apk add --no-cache wget fontconfig \
     && mkdir -p /usr/share/fonts/noto \
     && mkdir -p /var/lib/career-ability/reports \
     && wget -q -O /usr/share/fonts/noto/NotoSansSC.ttf \

@@ -1,7 +1,10 @@
-FROM python:3.10.15-slim-bookworm
+FROM python:3.10.19-slim-bookworm
 WORKDIR /app
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN apt-get update \
+    && apt-get upgrade -y \
+    && rm -rf /var/lib/apt/lists/* \
+    && pip install --no-cache-dir -r requirements.txt
 COPY . .
 RUN useradd --system --uid 10002 --create-home --home-dir /home/app app \
     && chown -R app:app /app /home/app
