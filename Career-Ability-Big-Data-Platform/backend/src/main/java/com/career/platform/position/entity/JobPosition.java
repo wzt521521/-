@@ -56,7 +56,7 @@ public class JobPosition {
     @Column
     private List<String> welfare = new ArrayList<>();
 
-    @Lob
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     @Column(name = "publish_date")

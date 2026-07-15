@@ -341,9 +341,9 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install pip-audit==2.7.3 pip-licenses==5.0.0
           pip-audit -r requirements.txt --strict
-          python -m pip install --upgrade cyclonedx-bom==5.0.0
-          cyclonedx-py requirements requirements.txt --output-file bom.json
           pip-licenses --format=json --with-urls --output-file licenses.json
+          python -m pip install --upgrade cyclonedx-bom==5.0.0
+          cyclonedx-py requirements requirements.txt -o bom.json
       - name: Validate Compose configuration for image build
         run: docker compose -f Career-Ability-Big-Data-Platform/docker-compose.yml config --quiet
       - name: Build release images
