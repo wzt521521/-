@@ -4,8 +4,17 @@ COPY requirements.txt .
 RUN apt-get update \
     && apt-get upgrade -y \
     && rm -rf /var/lib/apt/lists/* \
-    && pip install --no-cache-dir --upgrade "wheel>=0.46.2" "jaraco.context>=6.1.0" \
-    && pip install --no-cache-dir -r requirements.txt
+    && python -m pip install --no-cache-dir --upgrade \
+        "pip>=26.1.2" \
+        "setuptools>=80.9.0" \
+        "wheel>=0.46.2" \
+        "jaraco.context>=6.1.0" \
+    && find /usr/local/lib/python3.10/site-packages -type d \( \
+        -name 'wheel-0.45.1.dist-info' -o \
+        -name 'jaraco.context-5.3.0.dist-info' \
+    \) -prune -exec rm -rf {} + \
+    && python -m pip install --no-cache-dir -r requirements.txt \
+    && python -m pip check
 COPY . .
 RUN useradd --system --uid 10002 --create-home --home-dir /home/app app \
     && chown -R app:app /app /home/app
