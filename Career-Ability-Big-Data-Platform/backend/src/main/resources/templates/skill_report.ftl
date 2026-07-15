@@ -6,7 +6,7 @@
 <title>${reportTitle!""}</title>
 <style>
   @page { size: A4; margin: 2cm; }
-  body { font-family: "Noto Sans CJK SC", "Noto Sans CJK", sans-serif; font-size: 12pt; color: #333; line-height: 1.8; }
+  body { font-family: "Noto Sans SC", sans-serif; font-size: 12pt; color: #333; line-height: 1.8; }
   .cover { text-align: center; padding: 120px 0 60px; }
   .cover h1 { font-size: 28pt; color: #1a1a2e; margin-bottom: 24px; }
   .cover .subtitle { font-size: 14pt; color: #666; margin-bottom: 48px; }

@@ -16,7 +16,10 @@ does not fit this MIT-licensed repository's release model.
 
 ## Chinese font
 
-The runtime image installs Noto Sans CJK from Alpine's `font-noto-cjk` package.
-Noto fonts are licensed under the SIL Open Font License 1.1. The application
-embeds the configured Noto Sans CJK font in generated PDF documents so Chinese
-titles, tables, and punctuation do not depend on a viewer's local font set.
+The runtime image downloads `NotoSansSC[wght].ttf` from the Google Fonts commit
+`03781cf7a714af8431d14b6f337f923c774429d7`, verifies its SHA-256
+`A3041811A78C361B1DE50F953C805E0244951C21C5BD412F7232EF0D899AF0DA`, and
+installs it as `/usr/share/fonts/noto/NotoSansSC.ttf`. Noto Sans SC is licensed
+under the SIL Open Font License 1.1. The application embeds the configured font
+in generated PDF documents so Chinese titles, tables, and punctuation do not
+depend on a viewer's local font set.

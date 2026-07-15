@@ -14,7 +14,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 
-PUBLIC_FONT_PATH = "/usr/share/fonts/noto/NotoSansCJK-Regular.ttc"
+PUBLIC_FONT_PATH = "/usr/share/fonts/noto/NotoSansSC.ttf"
 PUBLIC_TITLE = "CI中文报告验收"
 
 
@@ -130,9 +130,9 @@ def assert_font_available(args: argparse.Namespace) -> None:
     completed = compose(
         args,
         "exec", "-T", "backend", "sh", "-c",
-        f"test -r {PUBLIC_FONT_PATH} && fc-match 'Noto Sans CJK SC'")
-    if "Noto" not in completed.stdout:
-        raise RuntimeError(f"Noto CJK font is not selected by fontconfig: {completed.stdout}")
+        f"test -r {PUBLIC_FONT_PATH} && fc-match --format='%{{file}}' 'Noto Sans SC'")
+    if completed.stdout.strip() != PUBLIC_FONT_PATH:
+        raise RuntimeError(f"Noto Sans SC font is not selected from {PUBLIC_FONT_PATH}: {completed.stdout}")
 
 
 def recreate_backend(args: argparse.Namespace) -> None:

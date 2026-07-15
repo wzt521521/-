@@ -83,7 +83,7 @@ app:
     lock-seconds: 1800
   report:
     output-dir: ${REPORT_OUTPUT_DIR:/var/lib/career-ability/reports}
-    font-file: ${REPORT_FONT_FILE:/usr/share/fonts/noto/NotoSansCJK-Regular.ttc}
+    font-file: ${REPORT_FONT_FILE:/usr/share/fonts/noto/NotoSansSC.ttf}
     require-chinese-font: ${REPORT_REQUIRE_CHINESE_FONT:false}
     max-attempts: ${REPORT_MAX_ATTEMPTS:3}
     pending-timeout-seconds: ${REPORT_PENDING_TIMEOUT_SECONDS:120}

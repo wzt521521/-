@@ -19,12 +19,12 @@ import java.nio.file.Paths;
 public class PdfReportRenderer {
 
     private static final Logger log = LoggerFactory.getLogger(PdfReportRenderer.class);
-    private static final String CHINESE_FONT_FAMILY = "Noto Sans CJK SC";
+    private static final String CHINESE_FONT_FAMILY = "Noto Sans SC";
     private static final int CHINESE_FONT_WEIGHT = 400;
     private final Path chineseFont;
     private final boolean requireChineseFont;
 
-    public PdfReportRenderer(@Value("${app.report.font-file:${REPORT_FONT_FILE:/usr/share/fonts/noto/NotoSansCJK-Regular.ttc}}")
+    public PdfReportRenderer(@Value("${app.report.font-file:${REPORT_FONT_FILE:/usr/share/fonts/noto/NotoSansSC.ttf}}")
                              String chineseFont,
                              @Value("${app.report.require-chinese-font:${REPORT_REQUIRE_CHINESE_FONT:false}}")
                              boolean requireChineseFont) {
@@ -42,10 +42,9 @@ public class PdfReportRenderer {
             builder.useExternalResourceAccessControl(
                     (uri, type) -> false, ExternalResourceControlPriority.RUN_BEFORE_RESOLVING_URI);
             if (Files.isRegularFile(chineseFont)) {
-                // Alpine's Noto CJK collection uses OTF outlines. PDFBox cannot subset those fonts
-                // because they have no TrueType glyf table, so embed the configured face in full.
+                // The pinned Google Fonts artifact has TrueType outlines, so PDFBox can subset it.
                 builder.useFont(chineseFont.toFile(), CHINESE_FONT_FAMILY, CHINESE_FONT_WEIGHT,
-                        FontStyle.NORMAL, false);
+                        FontStyle.NORMAL, true);
             } else if (requireChineseFont) {
                 throw new IOException("未找到受配置保护的中文字体: " + chineseFont);
             } else {
