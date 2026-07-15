@@ -23,6 +23,7 @@ from config import (
     MYSQL_PASSWORD,
     MYSQL_PORT,
     MYSQL_USER,
+    POSITION_DATA_VERSION_KEY,
     PROCESSING_QUEUE,
     RAW_QUEUE,
     REDIS_DB,
@@ -390,6 +391,7 @@ def process_batch(
     cleaned_queue: str = CLEANED_QUEUE,
     failed_queue: str = FAILED_QUEUE,
     cleaned_dedupe_set: str = CLEANED_DEDUPE_SET,
+    position_data_version_key: str = POSITION_DATA_VERSION_KEY,
     batch_size: int = BATCH_SIZE,
     timeout: int = 5,
     heartbeat: Callable[[], None] | None = None,
@@ -451,6 +453,12 @@ def process_batch(
         raise
     finally:
         cursor.close()
+
+    # Advance the shared recommendation version only after the MySQL transaction commits.
+    # Replayed duplicates may increment it again; that is harmless and guarantees a Redis
+    # outage between commit and acknowledgement cannot leave recommendation results stale.
+    if any(outcome in {"success", "duplicate"} for _, outcome, _, _ in outcomes):
+        redis_client.incr(position_data_version_key)
 
     for raw, outcome, job, reason in outcomes:
         if outcome in {"success", "duplicate"}:

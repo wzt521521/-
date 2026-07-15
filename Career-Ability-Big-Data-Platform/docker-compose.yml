@@ -61,7 +61,7 @@ services:
     container_name: job-backend
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/career_ability?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
       SPRING_DATASOURCE_USERNAME: root
@@ -69,14 +69,22 @@ services:
       SPRING_REDIS_HOST: redis
       SPRING_REDIS_PORT: 6379
       SPRING_CACHE_TYPE: redis
+      SPRING_PROFILES_ACTIVE: production
       SECURITY_JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set in .env}
+      INITIAL_ADMIN_USERNAME: ${INITIAL_ADMIN_USERNAME:-}
+      INITIAL_ADMIN_PASSWORD: ${INITIAL_ADMIN_PASSWORD:-}
       SECURITY_CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost,http://localhost:5173,http://127.0.0.1:5173}
+      REPORT_OUTPUT_DIR: /var/lib/career-ability/reports
+      REPORT_FONT_FILE: /usr/share/fonts/noto/NotoSansSC.ttf
+      REPORT_REQUIRE_CHINESE_FONT: "true"
       TZ: Asia/Shanghai
     depends_on:
       mysql:
         condition: service_healthy
       redis:
         condition: service_healthy
+    volumes:
+      - report-data:/var/lib/career-ability/reports
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/actuator/health/readiness || exit 1"]
       interval: 20s
@@ -126,6 +134,7 @@ services:
       MYSQL_USER: root
       MYSQL_PASSWORD: ${MYSQL_ROOT_PASSWORD:-local-development-password}
       MYSQL_DATABASE: career_ability
+      POSITION_DATA_VERSION_KEY: career:position-data-version
       CSV_PATH: /data/kaggle_jobs_500.csv
       ETL_HEARTBEAT_FILE: /tmp/etl-heartbeat
       TZ: Asia/Shanghai
@@ -145,6 +154,7 @@ services:
 volumes:
   mysql-data:
   redis-data:
+  report-data:
 
 # ============================================================
 # 自定义网络

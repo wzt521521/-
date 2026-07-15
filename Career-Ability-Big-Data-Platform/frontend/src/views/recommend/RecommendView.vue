@@ -206,6 +206,7 @@ onMounted(async () => {
             <el-select
               v-model="profile.skills"
               multiple
+              :multiple-limit="30"
               filterable
               allow-create
               default-first-option
@@ -419,6 +420,7 @@ onMounted(async () => {
       v-model="gapDialog"
       title="技能差距分析"
       width="640px"
+      class="gap-dialog"
       destroy-on-close
     >
       <div
@@ -708,6 +710,27 @@ onMounted(async () => {
 
   .gap-summary {
     flex-direction: column;
+  }
+}
+
+@media (max-width: 540px) {
+  .recommend-card {
+    padding: var(--space-4);
+  }
+
+  .card-header {
+    flex-direction: column;
+  }
+
+  .match-area {
+    align-items: flex-start;
+    flex-direction: row;
+    gap: var(--space-3);
+  }
+
+  .gap-dialog :deep(.el-dialog) {
+    width: calc(100vw - 32px) !important;
+    margin: var(--space-4) auto;
   }
 }
 </style>

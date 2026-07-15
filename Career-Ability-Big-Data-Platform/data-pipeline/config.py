@@ -9,6 +9,9 @@ REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
 REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
 REDIS_DB = int(os.getenv("REDIS_DB", "0"))
 REDIS_KEY_PREFIX = os.getenv("REDIS_KEY_PREFIX", "").strip(":")
+# Shared with the Java recommendation service. This key deliberately remains outside
+# queue namespaces so every successful production ETL batch invalidates recommendations.
+POSITION_DATA_VERSION_KEY = os.getenv("POSITION_DATA_VERSION_KEY", "career:position-data-version")
 
 MYSQL_HOST = os.getenv("MYSQL_HOST", "localhost")
 MYSQL_PORT = int(os.getenv("MYSQL_PORT", "3306"))

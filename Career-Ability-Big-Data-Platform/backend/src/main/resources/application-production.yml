@@ -1,0 +1,12 @@
+security:
+  jwt:
+    # Production deliberately has no development fallback. Startup validation rejects a missing or weak value.
+    secret: ${SECURITY_JWT_SECRET:${JWT_SECRET:}}
+
+app:
+  bootstrap:
+    admin:
+      username: ${INITIAL_ADMIN_USERNAME:}
+      password: ${INITIAL_ADMIN_PASSWORD:}
+  report:
+    require-chinese-font: true

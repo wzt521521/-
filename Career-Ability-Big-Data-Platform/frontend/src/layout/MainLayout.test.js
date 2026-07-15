@@ -67,4 +67,18 @@ describe('MainLayout analysis navigation permissions', () => {
     expect(recommendOnly.find('[data-menu-index="/recommend"]').exists()).toBe(true)
     expect(recommendOnly.find('[data-menu-index="/report"]').exists()).toBe(false)
   })
+
+  it('separates API key management from API call audit navigation', async () => {
+    const keyManager = await mountLayout(['api:key:manage'])
+
+    expect(keyManager.find('[data-menu-index="/open-api/keys"]').exists()).toBe(true)
+    expect(keyManager.find('[data-menu-index="/open-api/calls"]').exists()).toBe(false)
+    expect(keyManager.find('[data-menu-index="/api-docs"]').exists()).toBe(true)
+    keyManager.unmount()
+
+    const auditor = await mountLayout(['api:view'])
+
+    expect(auditor.find('[data-menu-index="/open-api/keys"]').exists()).toBe(false)
+    expect(auditor.find('[data-menu-index="/open-api/calls"]').exists()).toBe(true)
+  })
 })
