@@ -95,7 +95,7 @@ def prepare_profile(base_url: str, student_token: str) -> None:
     data(request_json("PUT", f"{base_url}/api/profile", {
         "major": "Computer Science",
         "skills": ["Java", "Python", "MySQL", "Redis"],
-        "education": "Bachelor",
+        "education": "??",
         "preferredCity": "Shanghai,Hangzhou",
         "salaryMin": 8,
         "salaryMax": 25,
