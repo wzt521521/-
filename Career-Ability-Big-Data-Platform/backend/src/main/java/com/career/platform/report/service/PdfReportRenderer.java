@@ -2,6 +2,7 @@ package com.career.platform.report.service;
 
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import com.openhtmltopdf.outputdevice.helper.ExternalResourceControlPriority;
+import com.openhtmltopdf.outputdevice.helper.BaseRendererBuilder.FontStyle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,6 +19,8 @@ import java.nio.file.Paths;
 public class PdfReportRenderer {
 
     private static final Logger log = LoggerFactory.getLogger(PdfReportRenderer.class);
+    private static final String CHINESE_FONT_FAMILY = "Noto Sans CJK SC";
+    private static final int CHINESE_FONT_WEIGHT = 400;
     private final Path chineseFont;
     private final boolean requireChineseFont;
 
@@ -39,8 +42,10 @@ public class PdfReportRenderer {
             builder.useExternalResourceAccessControl(
                     (uri, type) -> false, ExternalResourceControlPriority.RUN_BEFORE_RESOLVING_URI);
             if (Files.isRegularFile(chineseFont)) {
-                // PdfBoxFontResolver recognizes the Noto .ttc collection and embeds a matching CJK face.
-                builder.useFont(chineseFont.toFile(), "Noto Sans CJK SC");
+                // Alpine's Noto CJK collection uses OTF outlines. PDFBox cannot subset those fonts
+                // because they have no TrueType glyf table, so embed the configured face in full.
+                builder.useFont(chineseFont.toFile(), CHINESE_FONT_FAMILY, CHINESE_FONT_WEIGHT,
+                        FontStyle.NORMAL, false);
             } else if (requireChineseFont) {
                 throw new IOException("未找到受配置保护的中文字体: " + chineseFont);
             } else {
