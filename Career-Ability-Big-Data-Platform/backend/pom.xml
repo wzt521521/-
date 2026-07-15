@@ -26,6 +26,8 @@
         <tomcat.version>9.0.118</tomcat.version>
         <netty.version>4.1.135.Final</netty.version>
         <snakeyaml.version>2.0</snakeyaml.version>
+        <jackson-bom.version>2.18.8</jackson-bom.version>
+        <logback.version>1.2.13</logback.version>
         <springdoc.version>1.7.0</springdoc.version>
         <swagger.annotations.version>2.2.9</swagger.annotations.version>
         <maven.compiler.parameters>true</maven.compiler.parameters>

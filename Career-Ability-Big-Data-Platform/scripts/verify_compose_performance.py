@@ -78,7 +78,7 @@ def login(base_url: str, username: str, password: str) -> str:
 
 
 def create_student(base_url: str, admin_token: str) -> tuple[str, str]:
-    username = f"perf_student_{uuid.uuid4().hex[:8]}"
+    username = f"perf_stu_{uuid.uuid4().hex[:8]}"
     password = "ReleasePass!123"
     data(request_json("POST", f"{base_url}/api/admin/users", {
         "username": username,
