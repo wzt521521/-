@@ -9,6 +9,9 @@ on:
     branches:
       - main
       - release/1.0.0-integration
+    tags:
+      - 'v*'
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
