@@ -29,26 +29,30 @@ public class OfflineAnalysisService {
     private final ObjectMapper objectMapper;
     private final RecommendationCacheInvalidator recommendationCacheInvalidator;
     private final CacheManager cacheManager;
+    private final SparkAnalyticsGateway sparkGateway;
 
     @Autowired
     public OfflineAnalysisService(AnalyticsService analytics, JdbcTemplate jdbc, ObjectMapper objectMapper,
                                   RecommendationCacheInvalidator recommendationCacheInvalidator,
-                                  CacheManager cacheManager) {
+                                  CacheManager cacheManager,
+                                  @org.springframework.beans.factory.annotation.Autowired(required = false)
+                                  SparkAnalyticsGateway sparkGateway) {
         this.analytics = analytics;
         this.jdbc = jdbc;
         this.objectMapper = objectMapper;
         this.recommendationCacheInvalidator = recommendationCacheInvalidator;
         this.cacheManager = cacheManager;
+        this.sparkGateway = sparkGateway;
     }
 
     public OfflineAnalysisService(AnalyticsService analytics, JdbcTemplate jdbc, ObjectMapper objectMapper,
                                   RecommendationCacheInvalidator recommendationCacheInvalidator) {
-        this(analytics, jdbc, objectMapper, recommendationCacheInvalidator, null);
+        this(analytics, jdbc, objectMapper, recommendationCacheInvalidator, null, null);
     }
 
     /** Kept for focused unit tests which do not bootstrap the recommendation cache. */
     public OfflineAnalysisService(AnalyticsService analytics, JdbcTemplate jdbc, ObjectMapper objectMapper) {
-        this(analytics, jdbc, objectMapper, null);
+        this(analytics, jdbc, objectMapper, null, null, null);
     }
 
     @Transactional
@@ -60,6 +64,20 @@ public class OfflineAnalysisService {
             beforeInvocation = true)
     public void calculateAndPersist() {
         LocalDate today = LocalDate.now();
+
+        // 主通道：尝试用 Spark SQL 批量写入 stat_* 表
+        if (sparkGateway != null && sparkGateway.isEnabled()) {
+            try {
+                sparkGateway.runOfflineAggregation(today);
+                refreshCachesAfterCommit(analytics.calculateSnapshot());
+                LOGGER.info("Spark SQL 离线统计完成: {}", today);
+                return;
+            } catch (Exception e) {
+                LOGGER.warn("Spark SQL 离线统计失败，降级到 JdbcTemplate 兜底: {}", e.getMessage());
+            }
+        }
+
+        // 兜底通道：现有 JdbcTemplate 逐条写入逻辑，一行不动
         Date statDate = Date.valueOf(today);
         Map<String, Object> snapshot = analytics.calculateSnapshot();
         Map<String, Object> overview = map(snapshot.get("overview"));

@@ -4,6 +4,8 @@
 -- ============================================================
 
 -- 创建数据库（Docker 启动时已通过 MYSQL_DATABASE 环境变量创建，此处作为保险）
+SET NAMES utf8mb4;
+
 CREATE DATABASE IF NOT EXISTS career_ability
     DEFAULT CHARACTER SET utf8mb4
     DEFAULT COLLATE utf8mb4_unicode_ci;

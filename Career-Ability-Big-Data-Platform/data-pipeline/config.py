@@ -66,3 +66,8 @@ CLEANED_QUEUE = QUEUE_KEYS.cleaned
 FAILED_QUEUE = QUEUE_KEYS.failed
 RAW_DEDUPE_SET = QUEUE_KEYS.raw_dedupe
 CLEANED_DEDUPE_SET = QUEUE_KEYS.cleaned_dedupe
+
+# ----- Kafka 配置（大数据主通道）-----
+KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
+KAFKA_TOPIC_RAW_JOBS = os.getenv("KAFKA_TOPIC_RAW_JOBS", "raw-jobs")
+KAFKA_ENABLED = os.getenv("KAFKA_ENABLED", "true").lower() in ("1", "true", "yes")

@@ -1,9 +1,11 @@
 package com.career.platform.analytics.controller;
 
 import com.career.platform.analytics.service.AnalyticsService;
+import com.career.platform.analytics.service.OfflineAnalysisService;
 import com.career.platform.common.ApiResponse;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -14,9 +16,17 @@ import java.util.Map;
 @PreAuthorize("hasAuthority('dashboard:view')")
 public class DashboardController {
     private final AnalyticsService analytics;
+    private final OfflineAnalysisService offlineAnalysis;
 
-    public DashboardController(AnalyticsService analytics) {
+    public DashboardController(AnalyticsService analytics, OfflineAnalysisService offlineAnalysis) {
         this.analytics = analytics;
+        this.offlineAnalysis = offlineAnalysis;
+    }
+
+    @PostMapping("/refresh-cache")
+    public ApiResponse<Map<String, String>> refreshCache() {
+        offlineAnalysis.calculateAndPersist();
+        return ApiResponse.success(Map.of("status", "completed"));
     }
 
     @GetMapping("/all")

@@ -1,10 +1,12 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { ElMessage } from 'element-plus'
 import { Refresh, Briefcase, Coin, OfficeBuilding, TrendCharts } from '@element-plus/icons-vue'
 import ChartPanel from '../../components/ChartPanel.vue'
-import { getDashboard } from '../../api/analytics.js'
+import { getDashboard, refreshDashboardCache } from '../../api/analytics.js'
 
 const loading = ref(false)
+const refreshing = ref(false)
 const loadError = ref(false)
 const overview = ref({})
 const trends = ref({ monthly: [] })
@@ -100,6 +102,19 @@ async function load() {
   }
 }
 
+async function refreshCache() {
+  refreshing.value = true
+  try {
+    await refreshDashboardCache()
+    ElMessage.success('数据缓存已刷新')
+    await load()
+  } catch {
+    ElMessage.error('刷新失败，请稍后重试')
+  } finally {
+    refreshing.value = false
+  }
+}
+
 function configureTimer() {
   clearInterval(timer)
   timer = setInterval(load, refreshSeconds.value * 1000)
@@ -118,6 +133,9 @@ onBeforeUnmount(() => clearInterval(timer))
     <div class="page-toolbar">
       <p>数据更新时间：{{ refreshedAt ? refreshedAt.toLocaleTimeString('zh-CN', { hour12: false }) : '--:--:--' }}</p>
       <div class="refresh-tools">
+        <el-button :loading="refreshing" title="重新计算并刷新缓存" @click="refreshCache">
+          刷新缓存
+        </el-button>
         <el-select v-model="refreshSeconds" aria-label="自动刷新间隔" style="width: 112px" @change="configureTimer">
           <el-option label="30 秒刷新" :value="30" />
           <el-option label="60 秒刷新" :value="60" />

@@ -5,7 +5,7 @@ RUN mvn -q -DskipTests dependency:go-offline
 COPY src src
 RUN mvn -q -DskipTests package
 
-FROM eclipse-temurin:17.0.16_8-jre-alpine-3.22
+FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 RUN apk upgrade --no-cache \
     && apk add --no-cache wget fontconfig \

@@ -13,6 +13,9 @@ import pandas as pd
 
 from config import (
     DEFAULT_CSV_PATH,
+    KAFKA_BOOTSTRAP_SERVERS,
+    KAFKA_ENABLED,
+    KAFKA_TOPIC_RAW_JOBS,
     RAW_DEDUPE_SET,
     RAW_QUEUE,
     REDIS_DB,
@@ -176,6 +179,33 @@ def compute_source_md5(job: Mapping[str, Any]) -> str:
     return hashlib.md5(identity.encode("utf-8")).hexdigest()
 
 
+def create_kafka_producer(bootstrap_servers: str, timeout_ms: int = 5000):
+    """创建 Kafka 生产者，失败返回 None（触发降级到 Redis 通道）。"""
+    try:
+        from kafka import KafkaProducer  # type: ignore[import-untyped]
+        from kafka.errors import NoBrokersAvailable
+
+        return KafkaProducer(
+            bootstrap_servers=bootstrap_servers,
+            max_block_ms=timeout_ms,
+            request_timeout_ms=timeout_ms,
+            value_serializer=lambda v: json.dumps(v, ensure_ascii=False).encode("utf-8"),
+        )
+    except (ImportError, NoBrokersAvailable) as exc:
+        print(f"[WARN] Kafka 不可用 ({exc})，将使用 Redis 兜底通道")
+        return None
+
+
+def send_to_kafka(producer: Any, topic: str, job: dict[str, Any]) -> bool:
+    """发送一条岗位记录到 Kafka Topic。发送失败返回 False 触发降级。"""
+    try:
+        producer.send(topic, job)
+        return True
+    except Exception as exc:
+        print(f"[WARN] Kafka 发送失败 ({exc})，降级到 Redis 通道")
+        return False
+
+
 def enqueue_raw_job(
     redis_client: Any,
     job: dict[str, Any],
@@ -212,8 +242,13 @@ def import_file(
     city_map: Mapping[str, Mapping[str, str]] | None = None,
     raw_queue: str = RAW_QUEUE,
     raw_dedupe_set: str = RAW_DEDUPE_SET,
+    kafka_producer: Any = None,
+    kafka_topic: str = KAFKA_TOPIC_RAW_JOBS,
 ) -> dict[str, int]:
-    """Normalize and enqueue a source file, returning deterministic counters."""
+    """Normalize and enqueue a source file.
+
+    Kafka 主通道优先，失败自动降级到 Redis 兜底通道。
+    """
     dataframe = read_source_file(file_path)
     mapping = load_city_mapping() if city_map is None else city_map
     result = {"total": len(dataframe), "enqueued": 0, "duplicate": 0, "skipped": 0}
@@ -222,10 +257,20 @@ def import_file(
         if not job["title"] or not job["company"]["name"]:
             result["skipped"] += 1
             continue
-        if enqueue_raw_job(redis_client, job, raw_queue, raw_dedupe_set):
+
+        # 主通道：Kafka
+        kafka_sent = False
+        if kafka_producer:
+            kafka_sent = send_to_kafka(kafka_producer, kafka_topic, job)
+
+        if kafka_sent:
             result["enqueued"] += 1
         else:
-            result["duplicate"] += 1
+            # 兜底通道：Redis（现有逻辑，一行不动）
+            if enqueue_raw_job(redis_client, job, raw_queue, raw_dedupe_set):
+                result["enqueued"] += 1
+            else:
+                result["duplicate"] += 1
     return result
 
 
@@ -240,19 +285,34 @@ def main() -> None:
         db=REDIS_DB,
         decode_responses=True,
     )
+
+    # 尝试创建 Kafka 生产者（大数据主通道）
+    kafka_producer = None
+    if KAFKA_ENABLED:
+        kafka_producer = create_kafka_producer(KAFKA_BOOTSTRAP_SERVERS)
+        if kafka_producer:
+            print(f"[INFO] Kafka 主通道就绪: {KAFKA_BOOTSTRAP_SERVERS}")
+        else:
+            print("[INFO] Kafka 不可用，使用 Redis 兜底通道")
+
     try:
         client.ping()
-        result = import_file(file_path, client)
+        result = import_file(file_path, client, kafka_producer=kafka_producer)
         print(
             "[INFO] source rows={total} enqueued={enqueued} duplicates={duplicate} skipped={skipped}".format(
                 **result
             )
         )
-        print(f"[INFO] raw queue={RAW_QUEUE} pending={client.llen(RAW_QUEUE)}")
+        print(f"[INFO] Redis raw queue={RAW_QUEUE} pending={client.llen(RAW_QUEUE)}")
     except ValueError as error:
         print(f"[ERROR] {error}")
         raise SystemExit(1) from error
     finally:
+        if kafka_producer:
+            try:
+                kafka_producer.close()
+            except Exception:
+                pass
         client.close()
 
 

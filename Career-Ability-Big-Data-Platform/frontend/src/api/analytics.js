@@ -4,6 +4,7 @@ const dataOf = (response) => response.data
 
 export const getOverview = () => request.get('/stats/overview').then(dataOf)
 export const getDashboard = () => request.get('/dashboard/all').then(dataOf)
+export const refreshDashboardCache = () => request.post('/dashboard/refresh-cache').then(dataOf)
 export const getPositionStats = () => request.get('/stats/positions').then(dataOf)
 export const getSalaryStats = () => request.get('/stats/salary').then(dataOf)
 export const getSkillStats = () => request.get('/stats/skills').then(dataOf)

@@ -25,27 +25,35 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Service
 @Transactional(readOnly = true)
 public class AnalyticsService {
+    private static final Logger log = LoggerFactory.getLogger(AnalyticsService.class);
     private final PositionRepository positionRepository;
     private final PublicRecruitmentScopePolicy scopePolicy;
     private final Clock clock;
+    private final SparkAnalyticsGateway sparkGateway;
 
     @Autowired
-    public AnalyticsService(PositionRepository positionRepository, PublicRecruitmentScopePolicy scopePolicy) {
-        this(positionRepository, scopePolicy, Clock.systemDefaultZone());
+    public AnalyticsService(PositionRepository positionRepository, PublicRecruitmentScopePolicy scopePolicy,
+                            @org.springframework.beans.factory.annotation.Autowired(required = false) SparkAnalyticsGateway sparkGateway) {
+        this(positionRepository, scopePolicy, Clock.systemDefaultZone(), sparkGateway);
     }
 
     /** Kept for lightweight unit tests and external adapters compiled against the former API. */
     public AnalyticsService(PositionRepository positionRepository) {
-        this(positionRepository, new PublicRecruitmentScopePolicy(), Clock.systemDefaultZone());
+        this(positionRepository, new PublicRecruitmentScopePolicy(), Clock.systemDefaultZone(), null);
     }
 
-    AnalyticsService(PositionRepository positionRepository, PublicRecruitmentScopePolicy scopePolicy, Clock clock) {
+    AnalyticsService(PositionRepository positionRepository, PublicRecruitmentScopePolicy scopePolicy, Clock clock,
+                     SparkAnalyticsGateway sparkGateway) {
         this.positionRepository = positionRepository;
         this.scopePolicy = scopePolicy;
         this.clock = clock;
+        this.sparkGateway = sparkGateway;
     }
 
     @Cacheable("stat-dashboard")
@@ -111,6 +119,18 @@ public class AnalyticsService {
     }
 
     private Map<String, Object> overview(List<JobPosition> positions) {
+        if (sparkGateway != null && sparkGateway.isEnabled()) {
+            try {
+                Map<String, Object> sparkResult = sparkGateway.queryOverview();
+                if (sparkResult != null && !sparkResult.isEmpty()) {
+                    sparkResult.put("updatedAt", LocalDateTime.now(clock));
+                    return sparkResult;
+                }
+            } catch (Exception e) {
+                log.warn("Spark SQL 概览统计失败，降级到 MySQL 直查: {}", e.getMessage());
+            }
+        }
+
         LocalDate firstDay = LocalDate.now(clock).withDayOfMonth(1);
         long newThisMonth = positions.stream()
                 .filter(position -> position.getPublishDate() != null && !position.getPublishDate().isBefore(firstDay))
@@ -197,6 +217,17 @@ public class AnalyticsService {
     public Map<String, Object> skillsFor(AnalyticsFilter filter) { return skills(filteredPositions(filter)); }
 
     private Map<String, Object> skills(List<JobPosition> positions) {
+        if (sparkGateway != null && sparkGateway.isEnabled()) {
+            try {
+                Map<String, Object> sparkResult = sparkGateway.querySkills();
+                if (sparkResult != null && !sparkResult.isEmpty()) {
+                    return sparkResult;
+                }
+            } catch (Exception e) {
+                log.warn("Spark SQL 技能统计失败，降级到 MySQL 直查: {}", e.getMessage());
+            }
+        }
+
         Map<String, Long> counts = new HashMap<>();
         Map<String, Long> combinations = new HashMap<>();
         for (JobPosition position : positions) {
@@ -230,6 +261,17 @@ public class AnalyticsService {
     public Map<String, Object> educationFor(AnalyticsFilter filter) { return education(filteredPositions(filter)); }
 
     private Map<String, Object> education(List<JobPosition> positions) {
+        if (sparkGateway != null && sparkGateway.isEnabled()) {
+            try {
+                Map<String, Object> sparkResult = sparkGateway.queryEducation();
+                if (sparkResult != null && !sparkResult.isEmpty()) {
+                    return sparkResult;
+                }
+            } catch (Exception e) {
+                log.warn("Spark SQL 学历统计失败，降级到 MySQL 直查: {}", e.getMessage());
+            }
+        }
+
         Map<String, Long> counts = countBy(positions, position -> defaultValue(position.getEducation(), "不限"));
         List<Map<String, Object>> salaryByEducation = groupAverage(positions,
                 position -> defaultValue(position.getEducation(), "不限"), 20);
@@ -252,6 +294,19 @@ public class AnalyticsService {
     public Map<String, Object> cityFor(AnalyticsFilter filter) { return city(filteredPositions(filter)); }
 
     private Map<String, Object> city(List<JobPosition> positions) {
+        // 主通道：Spark SQL（通过 Feature Flag 控制，默认关闭）
+        if (sparkGateway != null && sparkGateway.isEnabled()) {
+            try {
+                Map<String, Object> sparkResult = sparkGateway.queryCity();
+                if (sparkResult != null && !sparkResult.isEmpty()) {
+                    return sparkResult;
+                }
+            } catch (Exception e) {
+                log.warn("Spark SQL 城市统计失败，降级到 MySQL 直查: {}", e.getMessage());
+            }
+        }
+
+        // 兜底通道：现有 MySQL + Java Stream 逻辑，一行不动
         Map<String, Long> counts = countBy(positions, position -> defaultValue(position.getCity(), "未知"));
         Map<String, String> provinceByCity = positions.stream().filter(position -> position.getCity() != null)
                 .collect(Collectors.toMap(JobPosition::getCity,

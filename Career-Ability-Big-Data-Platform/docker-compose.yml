@@ -150,6 +150,7 @@ services:
         condition: service_completed_successfully
     volumes:
       - report-data:/var/lib/career-ability/reports
+      - ./data:/data:ro
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/actuator/health/readiness || exit 1"]
       interval: 20s
@@ -244,6 +245,114 @@ services:
         limits:
           cpus: "1.00"
           memory: 768M
+
+  # ============================================================
+  # 大数据组件 — 主通道（Kafka + Spark + Zookeeper）
+  # 不可用时自动降级到 Redis + Python ETL 兜底通道
+  # ============================================================
+
+  zookeeper:
+    image: bitnami/zookeeper:3.9
+    container_name: job-zk
+    profiles: ["bigdata"]
+    restart: unless-stopped
+    environment:
+      ALLOW_ANONYMOUS_LOGIN: "yes"
+      TZ: Asia/Shanghai
+    networks:
+      - job-data-net
+    healthcheck:
+      test: ["CMD-SHELL", "echo srvr | nc localhost 2181 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 512M
+
+  kafka:
+    image: bitnami/kafka:3.6
+    container_name: job-kafka
+    profiles: ["bigdata"]
+    restart: unless-stopped
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    environment:
+      KAFKA_CFG_ZOOKEEPER_CONNECT: zookeeper:2181
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      TZ: Asia/Shanghai
+    networks:
+      - job-data-net
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server localhost:9092 --list || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 30s
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: 1024M
+
+  spark-master:
+    image: bitnami/spark:3.5
+    container_name: job-spark-master
+    profiles: ["bigdata"]
+    restart: unless-stopped
+    depends_on:
+      kafka:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    environment:
+      SPARK_MODE: master
+      SPARK_MASTER_HOST: spark-master
+      TZ: Asia/Shanghai
+    ports:
+      - "127.0.0.1:8081:8080"
+      - "127.0.0.1:7077:7077"
+    volumes:
+      - ./data-pipeline/spark_jobs:/spark_jobs:ro
+      - ./data:/data:ro
+    networks:
+      - job-data-net
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "1.50"
+          memory: 1536M
+
+  spark-worker:
+    image: bitnami/spark:3.5
+    container_name: job-spark-worker
+    profiles: ["bigdata"]
+    restart: unless-stopped
+    depends_on:
+      - spark-master
+    environment:
+      SPARK_MODE: worker
+      SPARK_MASTER_URL: spark://spark-master:7077
+      TZ: Asia/Shanghai
+    volumes:
+      - ./data-pipeline/spark_jobs:/spark_jobs:ro
+    networks:
+      - job-data-net
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: 1024M
 
 volumes:
   mysql-data:
